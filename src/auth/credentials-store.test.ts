@@ -39,6 +39,12 @@ describe('credentials store', () => {
         expect(stats.mode & 0o777).toBe(0o600)
     })
 
+    test('saveCredentials chmods parent dir 0700', async () => {
+        await saveCredentials(sampleCreds)
+        const dirStats = await stat(join(tmpHome, 'mna'))
+        expect(dirStats.mode & 0o777).toBe(0o700)
+    })
+
     test('saveCredentials then loadCredentials roundtrips', async () => {
         await saveCredentials(sampleCreds)
         const loaded = await loadCredentials()
