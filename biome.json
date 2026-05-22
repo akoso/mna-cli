@@ -1,0 +1,22 @@
+{
+    "$schema": "https://biomejs.dev/schemas/1.9.0/schema.json",
+    "files": {
+        "ignore": ["dist", "src/api/generated", "node_modules"]
+    },
+    "linter": {
+        "rules": {
+            "recommended": true,
+            "style": {
+                "noNonNullAssertion": "off"
+            },
+            "suspicious": {
+                "noExplicitAny": "warn"
+            }
+        }
+    },
+    "formatter": {
+        "indentStyle": "space",
+        "indentWidth": 4,
+        "lineWidth": 120
+    }
+}
