@@ -1,5 +1,16 @@
 #!/usr/bin/env bun
 import { defineCommand, runMain } from 'citty'
+import { configCommand } from '../commands/config'
+import { loginCommand } from '../commands/login'
+import { logoutCommand } from '../commands/logout'
+import { whoamiCommand } from '../commands/whoami'
+import { tripsListCommand } from '../commands/trips/list'
+import { tripsShowCommand } from '../commands/trips/show'
+
+const trips = defineCommand({
+    meta: { name: 'trips', description: 'View and manage trips.' },
+    subCommands: { list: tripsListCommand, show: tripsShowCommand },
+})
 
 const main = defineCommand({
     meta: {
@@ -7,10 +18,12 @@ const main = defineCommand({
         version: '0.0.1',
         description: 'My Next Adventure CLI',
     },
-    subCommands: {},
-    run() {
-        // Show help when invoked with no subcommand.
-        // citty handles --help / --version automatically.
+    subCommands: {
+        login: loginCommand,
+        logout: logoutCommand,
+        whoami: whoamiCommand,
+        trips,
+        config: configCommand,
     },
 })
 
