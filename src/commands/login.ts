@@ -1,8 +1,11 @@
 import { defineCommand } from 'citty'
+import { browserLogin } from '../auth/browser-login'
 import { pasteTokenLogin } from '../auth/paste-token-login'
 import { resolveBaseUrl } from '../auth/credentials-store'
 import { reportAndExit } from '../util/errors'
 import { colors } from '../render/colors'
+
+const DEFAULT_WEB_BASE = 'https://mynextadventure.cloud'
 
 export const loginCommand = defineCommand({
     meta: {
@@ -12,27 +15,33 @@ export const loginCommand = defineCommand({
     args: {
         'paste-token': {
             type: 'string',
-            description: 'API key generated from the "API Keys" item in the user menu on mynextadventure.cloud.',
+            description: 'Skip the browser flow — pass an API key generated in the user menu.',
+        },
+        'web-base-url': {
+            type: 'string',
+            description: 'Override the web app URL (rarely needed; defaults to mynextadventure.cloud).',
         },
     },
     async run({ args }) {
         try {
-            const pastedKey = args['paste-token']
-            if (!pastedKey) {
-                throw new Error(
-                    'Browser-mediated login is not yet available (Phase 1).\n' +
-                        '  Sign in at https://mynextadventure.cloud, open the user menu,\n' +
-                        '  and click "API Keys" to generate one. Then run:\n' +
-                        '    mna login --paste-token <key>',
-                )
+            const apiBaseUrl = resolveBaseUrl(null)
+            const webAppBaseUrl = args['web-base-url'] ?? process.env.MNA_WEB_BASE_URL ?? DEFAULT_WEB_BASE
+
+            if (args['paste-token']) {
+                const creds = await pasteTokenLogin({ apiKey: args['paste-token'], apiBaseUrl })
+                process.stdout.write(`${colors.green('✓')} Logged in.\n`)
+                process.stdout.write(colors.dim('  Credentials saved to ~/.config/mna/credentials\n'))
+                process.stdout.write(colors.dim(`  Base URL: ${creds.apiBaseUrl}\n`))
+                return
             }
 
-            const baseUrl = resolveBaseUrl(null)
-            const creds = await pasteTokenLogin({ apiKey: pastedKey, apiBaseUrl: baseUrl })
+            process.stdout.write('Opening browser for consent... If it does not open, copy the URL below.\n\n')
 
+            const { credentials, consentUrl } = await browserLogin({ apiBaseUrl, webAppBaseUrl })
+            process.stdout.write(colors.dim(`  ${consentUrl}\n\n`))
             process.stdout.write(`${colors.green('✓')} Logged in.\n`)
-            process.stdout.write(colors.dim("  Credentials saved to ~/.config/mna/credentials\n"))
-            process.stdout.write(colors.dim(`  Base URL: ${creds.apiBaseUrl}\n`))
+            process.stdout.write(colors.dim('  Credentials saved to ~/.config/mna/credentials\n'))
+            process.stdout.write(colors.dim(`  Base URL: ${credentials.apiBaseUrl}\n`))
         } catch (err) {
             reportAndExit(err)
         }
