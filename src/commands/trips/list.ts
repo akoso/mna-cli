@@ -13,7 +13,7 @@ export const tripsListCommand = defineCommand({
     args: {
         status: {
             type: 'string',
-            description: 'Filter by status (planning|booked|completed).',
+            description: 'Filter by status (planning|ready|finished|cancelled).',
         },
         'include-example': {
             type: 'boolean',
