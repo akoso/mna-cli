@@ -393,6 +393,126 @@
           }
         ]
       }
+    },
+    "/v1/me": {
+      "get": {
+        "operationId": "MeV1Controller_getMe",
+        "summary": "Return identity info for the API key holder.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeV1Dto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/api-keys": {
+      "get": {
+        "operationId": "ApiKeysV1Controller_list",
+        "summary": "List the current user's active API keys.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyListV1Dto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/api-keys/me": {
+      "delete": {
+        "operationId": "ApiKeysV1Controller_revokeCurrent",
+        "summary": "Revoke the API key authenticating this request.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevokeApiKeyResultV1Dto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/api-keys/{name}": {
+      "delete": {
+        "operationId": "ApiKeysV1Controller_revokeByName",
+        "summary": "Revoke an API key by name.",
+        "parameters": [
+          {
+            "name": "name",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevokeApiKeyResultV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No active key with that name."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
     }
   },
   "info": {
@@ -1301,6 +1421,84 @@
         },
         "required": [
           "name"
+        ]
+      },
+      "MeV1Dto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "The Kinde user ID associated with the calling API key."
+          },
+          "email": {
+            "type": "string",
+            "description": "User email (from Kinde, may be null if Kinde has no email on file)."
+          },
+          "name": {
+            "type": "string",
+            "description": "User display name (from Kinde)."
+          },
+          "apiKeyName": {
+            "type": "string",
+            "description": "The name field of the API key that authorized the request."
+          }
+        },
+        "required": [
+          "userId",
+          "apiKeyName"
+        ]
+      },
+      "ApiKeyListItemV1Dto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastUsed": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isCurrent": {
+            "type": "boolean",
+            "description": "True for the key authenticating the current request."
+          }
+        },
+        "required": [
+          "name",
+          "createdAt",
+          "isCurrent"
+        ]
+      },
+      "ApiKeyListV1Dto": {
+        "type": "object",
+        "properties": {
+          "keys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiKeyListItemV1Dto"
+            }
+          }
+        },
+        "required": [
+          "keys"
+        ]
+      },
+      "RevokeApiKeyResultV1Dto": {
+        "type": "object",
+        "properties": {
+          "revoked": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "revoked"
         ]
       }
     }

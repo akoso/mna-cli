@@ -16,9 +16,14 @@ async function generateFrom(source: string): Promise<string> {
 
 async function main() {
     const explicit = process.env.MNA_OPENAPI_URL
+    // Prefer the committed local snapshot first, then fall back to the live
+    // production URL. The snapshot is the source of truth committed alongside
+    // server changes, so CI lands green regardless of deploy timing; the URL
+    // fallback covers a fresh checkout where the snapshot file might be
+    // missing or someone wants to force-pull the latest prod surface.
     const sources = explicit
         ? [explicit]
-        : [DEFAULT_SOURCE, pathToFileURL(SNAPSHOT_PATH).toString()]
+        : [pathToFileURL(SNAPSHOT_PATH).toString(), DEFAULT_SOURCE]
 
     let contents: string | undefined
     let usedSource: string | undefined
