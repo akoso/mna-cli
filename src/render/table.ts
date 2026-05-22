@@ -33,7 +33,7 @@ export function renderTable<Row extends object>(
         columns.map((col) => {
             const raw = (row as Record<string, unknown>)[col.key]
             const text = raw == null ? '' : String(raw)
-            return col.maxWidth && text.length > col.maxWidth ? text.slice(0, col.maxWidth - 1) + '…' : text
+            return col.maxWidth && text.length > col.maxWidth ? `${text.slice(0, col.maxWidth - 1)}…` : text
         }),
     )
 
@@ -48,10 +48,10 @@ export function renderTable<Row extends object>(
     const headerLine = columns.map((col, i) => colors.bold(pad(col.header, widths[i]!))).join('  ')
     const separator = widths.map((w) => '─'.repeat(w)).join('  ')
 
-    writer.write(headerLine + '\n')
-    writer.write(colors.dim(separator) + '\n')
+    writer.write(`${headerLine}\n`)
+    writer.write(`${colors.dim(separator)}\n`)
 
     for (const row of stringRows) {
-        writer.write(row.map((cell, i) => pad(cell, widths[i]!)).join('  ') + '\n')
+        writer.write(`${row.map((cell, i) => pad(cell, widths[i]!)).join('  ')}\n`)
     }
 }

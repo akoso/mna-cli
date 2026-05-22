@@ -19,7 +19,12 @@ describe('renderTable', () => {
                         { id: 'trip_2', name: 'Iceland' },
                     ],
                 },
-                { write: (s) => (writes.push(s), true) },
+                {
+                    write: (s) => {
+                        writes.push(s)
+                        return true
+                    },
+                },
             )
         } finally {
             process.env.NO_COLOR = env
@@ -41,7 +46,12 @@ describe('renderTable', () => {
                 rows: [],
                 emptyMessage: 'No trips yet.',
             },
-            { write: (s) => (writes.push(s), true) },
+            {
+                write: (s) => {
+                    writes.push(s)
+                    return true
+                },
+            },
         )
         expect(writes.join('')).toContain('No trips yet.')
     })
@@ -56,7 +66,12 @@ describe('renderTable', () => {
                     columns: [{ header: 'Name', key: 'name', maxWidth: 10 }],
                     rows: [{ name: 'This is a very long trip name that should truncate' }],
                 },
-                { write: (s) => (writes.push(s), true) },
+                {
+                    write: (s) => {
+                        writes.push(s)
+                        return true
+                    },
+                },
             )
         } finally {
             process.env.NO_COLOR = env

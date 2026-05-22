@@ -9,5 +9,5 @@ const DEFAULT_WRITER: Writer = process.stdout
  * with a trailing newline.
  */
 export function renderJson(value: unknown, writer: Writer = DEFAULT_WRITER): void {
-    writer.write(JSON.stringify(value, null, 2) + '\n')
+    writer.write(`${JSON.stringify(value, null, 2)}\n`)
 }

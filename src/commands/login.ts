@@ -30,7 +30,7 @@ export const loginCommand = defineCommand({
             const creds = await pasteTokenLogin({ apiKey: pastedKey, apiBaseUrl: baseUrl })
 
             process.stdout.write(`${colors.green('✓')} Logged in.\n`)
-            process.stdout.write(colors.dim(`  Credentials saved to ~/.config/mna/credentials\n`))
+            process.stdout.write(colors.dim("  Credentials saved to ~/.config/mna/credentials\n"))
             process.stdout.write(colors.dim(`  Base URL: ${creds.apiBaseUrl}\n`))
         } catch (err) {
             reportAndExit(err)

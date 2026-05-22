@@ -22,7 +22,7 @@ export function reportAndExit(err: unknown): never {
     if (err instanceof Error) {
         process.stderr.write(`${colors.red('✖')} ${err.message}\n`)
         if (process.env.MNA_DEBUG === '1' && err.stack) {
-            process.stderr.write(colors.dim(err.stack + '\n'))
+            process.stderr.write(colors.dim(`${err.stack}\n`))
         }
         process.exit(1)
     }

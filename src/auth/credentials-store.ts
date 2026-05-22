@@ -32,7 +32,7 @@ export async function loadCredentials(): Promise<Credentials | null> {
 export async function saveCredentials(creds: Credentials): Promise<void> {
     const path = credentialsPath()
     await mkdir(dirname(path), { recursive: true, mode: 0o700 })
-    await writeFile(path, JSON.stringify(creds, null, 2) + '\n', { mode: 0o600 })
+    await writeFile(path, `${JSON.stringify(creds, null, 2)}\n`, { mode: 0o600 })
     await chmod(path, 0o600)
 }
 

@@ -65,7 +65,7 @@ describe('credentials store', () => {
         try {
             expect(resolveApiKey(await loadCredentials())).toBe('mna_live_override')
         } finally {
-            delete process.env.MNA_API_KEY
+            process.env.MNA_API_KEY = undefined
         }
     })
 })
