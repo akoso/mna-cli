@@ -15,7 +15,7 @@
         "LICENSE"
     ],
     "engines": {
-        "node": ">=20"
+        "bun": ">=1"
     },
     "scripts": {
         "build": "bun build src/bin/mna.ts --target=bun --outdir=dist",
