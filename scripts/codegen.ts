@@ -4,7 +4,7 @@ import { resolve, dirname } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import openapiTS, { astToString } from 'openapi-typescript'
 
-const DEFAULT_SOURCE = 'https://mynextadventure.cloud/v1/openapi.json'
+const DEFAULT_SOURCE = 'https://api.mynextadventure.cloud/v1/openapi.json'
 const REPO_ROOT = resolve(import.meta.dir, '..')
 const OUT_PATH = resolve(REPO_ROOT, 'src/api/generated/schema.ts')
 const SNAPSHOT_PATH = resolve(REPO_ROOT, 'openapi.json')

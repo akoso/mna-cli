@@ -51,5 +51,5 @@ to find the matching ID, then `mna trips show <id> --json`.
 ## Output expectations
 
 `--json` returns the raw server response. Schemas track
-https://mynextadventure.cloud/v1/openapi.json — when in doubt, fetch that and
+https://api.mynextadventure.cloud/v1/openapi.json — when in doubt, fetch that and
 read the schema definitions for the endpoint you're about to call.
