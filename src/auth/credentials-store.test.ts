@@ -61,11 +61,17 @@ describe('credentials store', () => {
 
     test('MNA_API_KEY env var overrides file when set', async () => {
         await saveCredentials(sampleCreds)
+        const before = process.env.MNA_API_KEY
         process.env.MNA_API_KEY = 'mna_live_override'
         try {
             expect(resolveApiKey(await loadCredentials())).toBe('mna_live_override')
         } finally {
-            process.env.MNA_API_KEY = undefined
+            if (before === undefined) {
+                // biome-ignore lint/performance/noDelete: must actually unset
+                delete process.env.MNA_API_KEY
+            } else {
+                process.env.MNA_API_KEY = before
+            }
         }
     })
 })
