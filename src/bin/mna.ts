@@ -6,10 +6,17 @@ import { logoutCommand } from '../commands/logout'
 import { whoamiCommand } from '../commands/whoami'
 import { tripsListCommand } from '../commands/trips/list'
 import { tripsShowCommand } from '../commands/trips/show'
+import { keysListCommand } from '../commands/keys/list'
+import { keysRevokeCommand } from '../commands/keys/revoke'
 
 const trips = defineCommand({
     meta: { name: 'trips', description: 'View and manage trips.' },
     subCommands: { list: tripsListCommand, show: tripsShowCommand },
+})
+
+const keys = defineCommand({
+    meta: { name: 'keys', description: 'Manage API keys.' },
+    subCommands: { list: keysListCommand, revoke: keysRevokeCommand },
 })
 
 const main = defineCommand({
@@ -23,6 +30,7 @@ const main = defineCommand({
         logout: logoutCommand,
         whoami: whoamiCommand,
         trips,
+        keys,
         config: configCommand,
     },
 })
