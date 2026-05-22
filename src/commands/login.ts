@@ -12,7 +12,7 @@ export const loginCommand = defineCommand({
     args: {
         'paste-token': {
             type: 'string',
-            description: 'API key generated from https://mynextadventure.com/settings/api-keys.',
+            description: 'API key generated from https://mynextadventure.cloud/settings/api-keys.',
         },
     },
     async run({ args }) {
@@ -21,7 +21,7 @@ export const loginCommand = defineCommand({
             if (!pastedKey) {
                 throw new Error(
                     'Browser-mediated login is not yet available (Phase 1).\n' +
-                        '  Generate an API key at https://mynextadventure.com/settings/api-keys\n' +
+                        '  Generate an API key at https://mynextadventure.cloud/settings/api-keys\n' +
                         '  Then run: mna login --paste-token <key>',
                 )
             }

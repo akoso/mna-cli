@@ -13,7 +13,7 @@ export function reportAndExit(err: unknown): never {
         }
         if (err.status === 402) {
             process.stderr.write(
-                colors.dim('  This action requires a Premium subscription: https://mynextadventure.com/pricing\n'),
+                colors.dim('  This action requires a Premium subscription: https://mynextadventure.cloud/pricing\n'),
             )
         }
         process.exit(2)

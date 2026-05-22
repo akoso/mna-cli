@@ -22,7 +22,7 @@ const sampleCreds: Credentials = {
     version: 1,
     apiKey: 'mna_live_test',
     user: { id: 'usr_1', email: 'test@example.com', name: 'Test User' },
-    apiBaseUrl: 'https://mynextadventure.com',
+    apiBaseUrl: 'https://mynextadventure.cloud',
     createdAt: '2026-05-22T00:00:00.000Z',
 }
 

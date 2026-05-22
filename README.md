@@ -1,6 +1,6 @@
 # mna
 
-> Command-line tool for [My Next Adventure](https://mynextadventure.com).
+> Command-line tool for [My Next Adventure](https://mynextadventure.cloud).
 
 `mna` is an open-source CLI for managing your trips on My Next Adventure.
 It also ships as a [Claude Code](https://claude.com/claude-code) skill so Claude
@@ -26,7 +26,7 @@ bun link
 
 ## Quickstart
 
-1. Generate an API key at https://mynextadventure.com/settings/api-keys.
+1. Generate an API key at https://mynextadventure.cloud/settings/api-keys.
 2. `mna login --paste-token <key>`
 3. `mna trips list`
 

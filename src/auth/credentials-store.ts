@@ -56,7 +56,7 @@ export function resolveBaseUrl(creds: Credentials | null): string {
     return (
         process.env.MNA_API_BASE_URL?.trim() ||
         creds?.apiBaseUrl ||
-        'https://mynextadventure.com'
+        'https://mynextadventure.cloud'
     )
 }
 

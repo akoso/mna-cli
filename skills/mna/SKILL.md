@@ -7,13 +7,13 @@ description: Use when the user wants to view, create, or manage their trips,
 
 # Managing trips with My Next Adventure
 
-You have access to the `mna` CLI for the user's trips on mynextadventure.com.
+You have access to the `mna` CLI for the user's trips on mynextadventure.cloud.
 
 ## Bootstrap
 
 Run `mna whoami` first. If it fails with "Not logged in", ask the user to run
 `mna login --paste-token <key>` themselves — they need to generate the key at
-https://mynextadventure.com/settings/api-keys.
+https://mynextadventure.cloud/settings/api-keys.
 
 Always pass `--json` so output is parseable.
 
@@ -50,5 +50,5 @@ to find the matching ID, then `mna trips show <id> --json`.
 ## Output expectations
 
 `--json` returns the raw server response. Schemas track
-https://mynextadventure.com/v1/openapi.json — when in doubt, fetch that and
+https://mynextadventure.cloud/v1/openapi.json — when in doubt, fetch that and
 read the schema definitions for the endpoint you're about to call.
