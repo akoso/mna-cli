@@ -5,7 +5,7 @@ import { spawn } from 'node:child_process'
 import { saveCredentials, type Credentials } from './credentials-store'
 
 const TIMEOUT_MS = 5 * 60 * 1000
-const PORT_MIN = 49152
+const PORT_MIN = 1024
 const PORT_MAX = 65535
 
 export interface BrowserLoginInput {
