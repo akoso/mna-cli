@@ -1,2 +1,1 @@
-[test]
-preload = []
+# Bun config. Test settings and preloads can go here.
