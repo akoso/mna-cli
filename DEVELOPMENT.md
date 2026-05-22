@@ -26,6 +26,15 @@ bun run build           # bundles to dist/ for npm publish
 bun run codegen         # regen types from production OpenAPI
 ```
 
+## Codegen source priority
+
+Without `MNA_OPENAPI_URL` set, `bun run codegen` tries sources in order:
+
+1. `https://mynextadventure.com/v1/openapi.json` (the live public spec)
+2. `openapi.json` at the repo root (committed snapshot, refreshed periodically)
+
+The snapshot fallback exists so CI and fresh clones work even when the production endpoint is unreachable. Once the production deploy is reliably online, prefer the URL — the committed snapshot will be regenerated on a slower cadence to track major contract changes.
+
 ## Codegen against a local server
 
 If you're hacking on `mynextadventure/travel-plans` locally:
@@ -33,6 +42,8 @@ If you're hacking on `mynextadventure/travel-plans` locally:
 ```bash
 MNA_OPENAPI_URL=http://127.0.0.1:5010/v1/openapi.json bun run codegen
 ```
+
+Explicitly setting `MNA_OPENAPI_URL` disables the snapshot fallback — the script tries only that one source and fails if it's down.
 
 ## File layout
 
