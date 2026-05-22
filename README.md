@@ -26,7 +26,7 @@ bun link
 
 ## Quickstart
 
-1. Generate an API key at https://mynextadventure.cloud/settings/api-keys.
+1. Sign in at https://mynextadventure.cloud, open the user menu, and click **API Keys** to generate one.
 2. `mna login --paste-token <key>`
 3. `mna trips list`
 

@@ -12,8 +12,9 @@ You have access to the `mna` CLI for the user's trips on mynextadventure.cloud.
 ## Bootstrap
 
 Run `mna whoami` first. If it fails with "Not logged in", ask the user to run
-`mna login --paste-token <key>` themselves — they need to generate the key at
-https://mynextadventure.cloud/settings/api-keys.
+`mna login --paste-token <key>` themselves — they generate the key by signing
+in at https://mynextadventure.cloud, opening the user menu, and clicking
+"API Keys".
 
 Always pass `--json` so output is parseable.
 
