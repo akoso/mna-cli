@@ -6,12 +6,25 @@ import { logoutCommand } from '../commands/logout'
 import { whoamiCommand } from '../commands/whoami'
 import { tripsListCommand } from '../commands/trips/list'
 import { tripsShowCommand } from '../commands/trips/show'
+import { tripsCreateCommand } from '../commands/trips/create'
+import { tripsEditCommand } from '../commands/trips/edit'
+import { tripsDeleteCommand } from '../commands/trips/delete'
+import { tripsShareCommand } from '../commands/trips/share'
+import { tripsUnshareCommand } from '../commands/trips/unshare'
 import { keysListCommand } from '../commands/keys/list'
 import { keysRevokeCommand } from '../commands/keys/revoke'
 
 const trips = defineCommand({
     meta: { name: 'trips', description: 'View and manage trips.' },
-    subCommands: { list: tripsListCommand, show: tripsShowCommand },
+    subCommands: {
+        list: tripsListCommand,
+        show: tripsShowCommand,
+        create: tripsCreateCommand,
+        edit: tripsEditCommand,
+        delete: tripsDeleteCommand,
+        share: tripsShareCommand,
+        unshare: tripsUnshareCommand,
+    },
 })
 
 const keys = defineCommand({

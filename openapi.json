@@ -43,6 +43,34 @@
             "X-API-Key": []
           }
         ]
+      },
+      "post": {
+        "operationId": "TripWritesV1Controller_create",
+        "summary": "Create a new trip.",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTripV1Dto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Trip created. Body contains the created Trip document."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
       }
     },
     "/v1/trips/{id}": {
@@ -80,6 +108,83 @@
           },
           "404": {
             "description": "Trip not found or no access."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "TripWritesV1Controller_update",
+        "summary": "Update top-level trip fields.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTripV1Dto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Trip updated."
+          },
+          "404": {
+            "description": "Trip not found or no edit access."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "TripWritesV1Controller_delete",
+        "summary": "Delete a trip permanently.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteTripResultV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Trip not found or no owner access."
           }
         },
         "tags": [
@@ -382,6 +487,79 @@
         "responses": {
           "200": {
             "description": ""
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/trips/{id}/share-link": {
+      "post": {
+        "operationId": "TripWritesV1Controller_createShareLink",
+        "summary": "Generate or refresh a shareable link for the trip.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareLinkV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Trip not found, no access, or trip has no variant to share."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "TripWritesV1Controller_deleteShareLinks",
+        "summary": "Revoke all share tokens for the trip.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnshareResultV1Dto"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -1421,6 +1599,91 @@
         },
         "required": [
           "name"
+        ]
+      },
+      "CreateTripV1Dto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Trip name as shown in the UI.",
+            "example": "Japan 2026"
+          },
+          "coverPhoto": {
+            "type": "string",
+            "description": "URL of the cover photo.",
+            "nullable": true
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "UpdateTripV1Dto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "New trip name."
+          },
+          "coverPhoto": {
+            "type": "string",
+            "description": "URL of the new cover photo."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "planning",
+              "ready",
+              "finished",
+              "cancelled"
+            ],
+            "description": "New trip status."
+          }
+        }
+      },
+      "DeleteTripResultV1Dto": {
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "deleted",
+          "id"
+        ]
+      },
+      "ShareLinkV1Dto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The shareable trip URL."
+          },
+          "token": {
+            "type": "string",
+            "description": "The opaque share token at the end of the URL."
+          }
+        },
+        "required": [
+          "url",
+          "token"
+        ]
+      },
+      "UnshareResultV1Dto": {
+        "type": "object",
+        "properties": {
+          "removedCount": {
+            "type": "number",
+            "description": "Number of share tokens that were active and have now been revoked."
+          }
+        },
+        "required": [
+          "removedCount"
         ]
       },
       "MeV1Dto": {
