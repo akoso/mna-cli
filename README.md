@@ -57,30 +57,132 @@ bun link
 
 ## Quickstart
 
-1. Sign in at https://mynextadventure.cloud, open the user menu, and click **API Keys** to generate one.
-2. `mna login --paste-token <key>`
-3. `mna trips list`
+```bash
+mna login                          # opens browser for one-click consent
+mna trips list                     # see your trips
+mna trips show <tripId>            # detail view
+```
 
-## Commands (Phase 0)
+If you prefer headless / paste-token login:
 
-| Command | Description |
-|---|---|
-| `mna login --paste-token <key>` | Authenticate the CLI. |
-| `mna logout` | Delete local credentials. |
-| `mna whoami` | Show the current user (from local file). |
-| `mna trips list [--status=...] [--include-example]` | List trips. |
-| `mna trips show <tripId> [--all-options]` | Show one trip in detail. |
-| `mna config get apiBaseUrl` | Show the current API base URL. |
-| `mna config set apiBaseUrl <url>` | Override the base URL. |
+```bash
+mna login --paste-token <key>      # generate the key from the user menu on mynextadventure.cloud
+```
+
+## Commands
 
 Every command supports `--json` for piping into `jq` or Claude.
 
-## Roadmap
+### Auth & identity
 
-- **Phase 1:** Browser-mediated login, `mna keys list|revoke`, `mna whoami --verify`.
-- **Phases 2–7:** Trip / variant / destination / option / event / access / goal
-  / collection CRUD as the server-side public API surface lands.
-- **Phase 8:** npm package + Homebrew tap with native binaries.
+| Command | Description |
+|---|---|
+| `mna login [--paste-token <key>]` | Browser-mediated login (default) or headless paste-token. |
+| `mna logout [--local-only]` | Revoke the current API key server-side and delete local credentials. |
+| `mna whoami [--verify]` | Show the current user; `--verify` re-fetches from `/v1/me`. |
+| `mna keys list` | List active API keys with `current` flag on the calling key. |
+| `mna keys revoke <name> [--yes]` | Revoke an API key by name. |
+| `mna config get\|set apiBaseUrl [<url>]` | Read/override the API base URL locally. |
+
+### Trips
+
+| Command | Description |
+|---|---|
+| `mna trips list [--status=planning\|ready\|finished\|cancelled] [--include-example]` | List trips. |
+| `mna trips show <tripId> [--all-options]` | Show one trip in detail. |
+| `mna trips create --name <name> [--cover-photo <url>]` | Create a new trip. |
+| `mna trips edit <tripId> [--name=...] [--cover-photo=...] [--status=...]` | Update trip-level fields. |
+| `mna trips delete <tripId> [--yes]` | Delete a trip permanently. |
+| `mna trips share <tripId>` | Generate a shareable link for the trip. |
+| `mna trips unshare <tripId>` | Revoke all share links. |
+
+### Variants
+
+| Command | Description |
+|---|---|
+| `mna variants add <tripId> --name <name> [--notes=...]` | Add a new variant. |
+| `mna variants duplicate <tripId> <variantId>` | Duplicate a variant. |
+| `mna variants edit <tripId> <variantId> [--name=...] [--notes=...]` | Update variant fields. |
+| `mna variants select <tripId> <variantId>` | Set the selected variant. |
+| `mna variants delete <tripId> <variantId> [--yes]` | Delete a variant. |
+
+### Destinations
+
+| Command | Description |
+|---|---|
+| `mna destinations add <tripId> <variantId> --place <name> [--notes=...] [--return-to-home]` | Add a destination. |
+| `mna destinations edit <tripId> <variantId> <destinationKey> [--place=...] [--notes=...] [--no-return-to-home]` | Update destination. |
+| `mna destinations reorder <tripId> <variantId> --order=key1,key2,key3` | Reorder destinations. |
+| `mna destinations delete <tripId> <variantId> <destinationKey> [--yes]` | Delete a destination. |
+
+### Options (accommodation \| transport \| getting-around)
+
+| Command | Description |
+|---|---|
+| `mna options add <tripId> <variantId> <destinationKey> <kind> --from-json=<file>` | Add an option from JSON. |
+| `mna options edit <tripId> <variantId> <destinationKey> <kind> <optionKey> --from-json=<file>` | Edit an option. |
+| `mna options delete <tripId> <variantId> <destinationKey> <kind> <optionKey> [--yes]` | Delete an option. |
+| `mna options select <tripId> <variantId> <destinationKey> <kind> <optionKey>` | Select an option. |
+| `mna options deselect <tripId> <variantId> <destinationKey> <kind>` | Deselect the current option. |
+
+### Events
+
+| Command | Description |
+|---|---|
+| `mna events add <tripId> <variantId> --from-json=<file>` | Add an event. |
+| `mna events edit <tripId> <variantId> <eventKey> --from-json=<file>` | Edit an event. |
+| `mna events toggle <tripId> <variantId> <eventKey>` | Toggle the event's selected state. |
+| `mna events delete <tripId> <variantId> <eventKey> [--yes]` | Delete an event. |
+
+### Collaboration & voting
+
+| Command | Description |
+|---|---|
+| `mna access list <tripId>` | List collaborators on a trip. |
+| `mna access invite <tripId> --email=... --role=VIEW\|VOTER\|EDIT\|OWNER` | Invite a collaborator by email. |
+| `mna access set-role <tripId> --user=<userId> --role=...` | Change a collaborator's role. |
+| `mna access revoke <tripId> --user=<userId> [--yes]` | Remove a collaborator. |
+| `mna access create-invite-link <tripId> --role=VIEW\|VOTER\|EDIT` | Generate an invite-link token. |
+| `mna access list-invite-links <tripId>` | List active invite links. |
+| `mna access revoke-invite-link <tripId> <tokenId> [--yes]` | Revoke an invite link. |
+| `mna vote option <tripId> <variantId> <destinationKey> <kind> <optionKey> --value=up\|down\|clear` | Vote on an option. |
+| `mna vote event <tripId> <variantId> <eventKey> --value=up\|down\|clear` | Vote on an event. |
+| `mna votes list <tripId> <variantId>` | List votes for a variant. |
+
+### Travel goals
+
+| Command | Description |
+|---|---|
+| `mna goals list [--collection=<id>] [--status=visited\|dreaming\|planning]` | List goals. |
+| `mna goals show <goalId>` | Show one goal. |
+| `mna goals add --from-json=<file>` | Create a goal from JSON. |
+| `mna goals quick-add --text="..."` | Quick-add a goal by name or URL. |
+| `mna goals edit <goalId> --from-json=<file>` | Update a goal. |
+| `mna goals delete <goalId> [--yes]` | Delete a goal. |
+| `mna goals link-trip <goalId> <tripId>` | Link a goal to a trip. |
+| `mna goals unlink-trip <goalId>` | Unlink a goal from its trip. |
+| `mna goals mark-visited <goalId> [--date=<ISO>]` | Mark a goal as visited. |
+| `mna goals mark-dreaming <goalId>` | Reset a goal to "dreaming". |
+
+### Goal collections
+
+| Command | Description |
+|---|---|
+| `mna collections list` | List your collections. |
+| `mna collections show <collectionId>` | Show a collection with nested goals. |
+| `mna collections create --name=<name> [--description=...] [--emoji=...] [--visibility=private\|shared\|public]` | Create a collection. |
+| `mna collections edit <collectionId> --from-json=<file>` | Update a collection. |
+| `mna collections delete <collectionId> [--yes]` | Delete a collection. |
+| `mna collections add-goal <collectionId> <goalId>` | Add a goal to a collection. |
+| `mna collections remove-goal <collectionId> <goalId>` | Remove a goal from a collection. |
+| `mna collections share <collectionId>` | Generate a public share URL. |
+| `mna collections open-shared <token>` | Open a publicly shared collection (no login required). |
+
+## Status
+
+All command groups (auth/keys/config, trips, variants, destinations, options, events, access, vote/votes, goals, collections) are wired and CI-tested. Pre-1.0 means the public API contract is still allowed to break under `/v1/`. Once `1.0.0` ships, `/v1/` becomes stable; breaking changes require `/v2/`.
+
+The matching server-side public API endpoints land progressively in the `akoso/travel-plans` repo. If a command returns a 404 against production, the corresponding server PR likely hasn't deployed yet — try `mna whoami --verify` to confirm your base URL.
 
 ## Configuration
 
