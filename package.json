@@ -5,20 +5,20 @@
     "license": "MIT",
     "type": "module",
     "bin": {
-        "mna": "./src/bin/mna.ts"
+        "mna": "./dist/mna.js"
     },
     "files": [
-        "src/**/*.ts",
-        "!src/**/*.test.ts",
+        "dist/mna.js",
         "skills/**",
         "README.md",
         "LICENSE"
     ],
     "engines": {
-        "bun": ">=1"
+        "node": ">=20"
     },
     "scripts": {
-        "build": "bun build src/bin/mna.ts --target=bun --outdir=dist",
+        "build": "bun build src/bin/mna.ts --target=node --outdir=dist --format=esm && bun run scripts/postbuild.ts",
+        "build:binaries": "scripts/build-binaries.sh",
         "codegen": "bun run scripts/codegen.ts",
         "dev": "bun run src/bin/mna.ts",
         "format": "biome format --write .",
