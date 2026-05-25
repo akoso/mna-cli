@@ -1355,6 +1355,493 @@
         ]
       }
     },
+    "/v1/trips/{id}/access": {
+      "get": {
+        "operationId": "AccessV1Controller_list",
+        "summary": "List users with access to a trip (includes the owner).",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripAccessListV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Trip not found or no access."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/trips/{id}/access/invite": {
+      "post": {
+        "operationId": "AccessV1Controller_invite",
+        "summary": "Invite a user to a trip by email and send the invite email.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteUserV1Dto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteUserResultV1Dto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "User already invited."
+          },
+          "404": {
+            "description": "Trip not found or no owner access."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/trips/{id}/access/{userId}": {
+      "patch": {
+        "operationId": "AccessV1Controller_updateLevel",
+        "summary": "Change a user's access level on a trip.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAccessLevelV1Dto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateAccessLevelResultV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Trip not found or no owner access."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "AccessV1Controller_removeAccess",
+        "summary": "Remove a user's access from a trip.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoveAccessResultV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Trip not found or no owner access."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/trips/{id}/access/invite-tokens": {
+      "post": {
+        "operationId": "AccessV1Controller_createInviteToken",
+        "summary": "Generate a new shareable invite-link token.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInviteTokenV1Dto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteTokenV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Trip not found or no owner access."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "AccessV1Controller_listInviteTokens",
+        "summary": "List unexpired invite-link tokens for a trip.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteTokenListV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Trip not found or no owner access."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/trips/{id}/access/invite-tokens/{tokenId}": {
+      "delete": {
+        "operationId": "AccessV1Controller_revokeInviteToken",
+        "summary": "Revoke an invite-link token.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tokenId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevokeInviteTokenResultV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Trip not found or no owner access."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/trips/{id}/variants/{variantId}/votes/options": {
+      "post": {
+        "operationId": "VotesV1Controller_voteOption",
+        "summary": "Cast / update / clear a vote on a destination option.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "variantId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoteOptionV1Dto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CastVoteResultV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Trip or variant not found, or no voter access."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/trips/{id}/variants/{variantId}/votes/events": {
+      "post": {
+        "operationId": "VotesV1Controller_voteEvent",
+        "summary": "Cast / update / clear a vote on an event.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "variantId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoteEventV1Dto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CastVoteResultV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Trip or variant not found, or no voter access."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/trips/{id}/variants/{variantId}/votes": {
+      "get": {
+        "operationId": "VotesV1Controller_listVotes",
+        "summary": "List all votes cast on a variant (options + events).",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "variantId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoteListV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Trip or variant not found, or no access."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
     "/v1/me": {
       "get": {
         "operationId": "MeV1Controller_getMe",
@@ -2743,6 +3230,378 @@
         "required": [
           "deleted",
           "eventKey"
+        ]
+      },
+      "TripAccessUserInfoV1Dto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "Kinde user id, present once the invitee has logged in at least once."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name. May be empty for pending (un-claimed) invites."
+          },
+          "email": {
+            "type": "string",
+            "description": "Email address on file for the invitee."
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "TripAccessV1Dto": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/TripAccessUserInfoV1Dto"
+          },
+          "accessLevel": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "edit",
+              "voter",
+              "view"
+            ],
+            "description": "Access level granted to this user on the trip."
+          }
+        },
+        "required": [
+          "user",
+          "accessLevel"
+        ]
+      },
+      "TripAccessListV1Dto": {
+        "type": "object",
+        "properties": {
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TripAccessV1Dto"
+            }
+          }
+        },
+        "required": [
+          "users"
+        ]
+      },
+      "InviteUserV1Dto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Email address to invite. The user does not have to be signed up yet."
+          },
+          "accessLevel": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "edit",
+              "voter",
+              "view"
+            ],
+            "description": "Access level to grant."
+          }
+        },
+        "required": [
+          "email",
+          "accessLevel"
+        ]
+      },
+      "InviteUserResultV1Dto": {
+        "type": "object",
+        "properties": {
+          "invited": {
+            "type": "boolean"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email that was invited."
+          }
+        },
+        "required": [
+          "invited",
+          "email"
+        ]
+      },
+      "UpdateAccessLevelV1Dto": {
+        "type": "object",
+        "properties": {
+          "accessLevel": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "edit",
+              "voter",
+              "view"
+            ],
+            "description": "New access level for the user."
+          }
+        },
+        "required": [
+          "accessLevel"
+        ]
+      },
+      "UpdateAccessLevelResultV1Dto": {
+        "type": "object",
+        "properties": {
+          "updated": {
+            "type": "boolean"
+          },
+          "userId": {
+            "type": "string",
+            "description": "User id whose access was updated."
+          }
+        },
+        "required": [
+          "updated",
+          "userId"
+        ]
+      },
+      "RemoveAccessResultV1Dto": {
+        "type": "object",
+        "properties": {
+          "removed": {
+            "type": "boolean",
+            "description": "True if a row was deleted; false if the user already had no access."
+          },
+          "userId": {
+            "type": "string",
+            "description": "User id whose access was removed."
+          }
+        },
+        "required": [
+          "removed",
+          "userId"
+        ]
+      },
+      "CreateInviteTokenV1Dto": {
+        "type": "object",
+        "properties": {
+          "accessLevel": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "edit",
+              "voter",
+              "view"
+            ],
+            "description": "Access level the resulting invite link will grant."
+          }
+        },
+        "required": [
+          "accessLevel"
+        ]
+      },
+      "InviteTokenV1Dto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Mongo id of the invite token row (used to revoke)."
+          },
+          "token": {
+            "type": "string",
+            "description": "Opaque token string. Concatenate with the invite URL prefix to share."
+          },
+          "inviteUrl": {
+            "type": "string",
+            "description": "Full URL the recipient can open to accept the invite."
+          },
+          "accessLevel": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "edit",
+              "voter",
+              "view"
+            ]
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this token expires."
+          }
+        },
+        "required": [
+          "token",
+          "inviteUrl",
+          "accessLevel",
+          "expiresAt"
+        ]
+      },
+      "InviteTokenListV1Dto": {
+        "type": "object",
+        "properties": {
+          "tokens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InviteTokenV1Dto"
+            }
+          }
+        },
+        "required": [
+          "tokens"
+        ]
+      },
+      "RevokeInviteTokenResultV1Dto": {
+        "type": "object",
+        "properties": {
+          "revoked": {
+            "type": "boolean",
+            "description": "True if the token row was deleted; false if no matching token existed."
+          },
+          "tokenId": {
+            "type": "string",
+            "description": "Id of the invite token requested for revocation."
+          }
+        },
+        "required": [
+          "revoked",
+          "tokenId"
+        ]
+      },
+      "VoteOptionV1Dto": {
+        "type": "object",
+        "properties": {
+          "destinationKey": {
+            "type": "string",
+            "description": "Destination key the option belongs to."
+          },
+          "optionKey": {
+            "type": "string",
+            "description": "Option key inside the destination."
+          },
+          "value": {
+            "type": "string",
+            "enum": [
+              "up",
+              "down",
+              "clear"
+            ],
+            "description": "Vote direction. 'clear' removes the caller's existing vote."
+          }
+        },
+        "required": [
+          "destinationKey",
+          "optionKey",
+          "value"
+        ]
+      },
+      "CastVoteResultV1Dto": {
+        "type": "object",
+        "properties": {
+          "voted": {
+            "type": "boolean",
+            "description": "True if a vote was cast or updated; false if it was cleared."
+          },
+          "value": {
+            "type": "string",
+            "enum": [
+              "up",
+              "down",
+              "clear"
+            ],
+            "description": "Echo of the requested value for confirmation."
+          }
+        },
+        "required": [
+          "voted",
+          "value"
+        ]
+      },
+      "VoteEventV1Dto": {
+        "type": "object",
+        "properties": {
+          "eventKey": {
+            "type": "string",
+            "description": "Event key inside the variant."
+          },
+          "value": {
+            "type": "string",
+            "enum": [
+              "up",
+              "down",
+              "clear"
+            ],
+            "description": "Vote direction. 'clear' removes the caller's existing vote."
+          }
+        },
+        "required": [
+          "eventKey",
+          "value"
+        ]
+      },
+      "VoteUserV1Dto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "VoteV1Dto": {
+        "type": "object",
+        "properties": {
+          "vote": {
+            "type": "number",
+            "enum": [
+              -1,
+              1
+            ],
+            "description": "1 = up, -1 = down."
+          },
+          "user": {
+            "description": "User who cast the vote.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VoteUserV1Dto"
+              }
+            ]
+          },
+          "variantId": {
+            "type": "string",
+            "description": "Variant the vote is scoped to."
+          },
+          "destinationKey": {
+            "type": "string",
+            "description": "Destination key (omitted for variant-level / event-level votes)."
+          },
+          "optionKey": {
+            "type": "string",
+            "description": "For option votes this is the option's key; for event votes it is the event's key."
+          }
+        },
+        "required": [
+          "vote",
+          "user",
+          "variantId"
+        ]
+      },
+      "VoteListV1Dto": {
+        "type": "object",
+        "properties": {
+          "votes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VoteV1Dto"
+            }
+          }
+        },
+        "required": [
+          "votes"
         ]
       },
       "MeV1Dto": {

@@ -31,6 +31,16 @@ import { eventsToggleCommand } from '../commands/events/toggle'
 import { eventsDeleteCommand } from '../commands/events/delete'
 import { keysListCommand } from '../commands/keys/list'
 import { keysRevokeCommand } from '../commands/keys/revoke'
+import { accessListCommand } from '../commands/access/list'
+import { accessInviteCommand } from '../commands/access/invite'
+import { accessSetRoleCommand } from '../commands/access/set-role'
+import { accessRevokeCommand } from '../commands/access/revoke'
+import { accessCreateInviteLinkCommand } from '../commands/access/create-invite-link'
+import { accessListInviteLinksCommand } from '../commands/access/list-invite-links'
+import { accessRevokeInviteLinkCommand } from '../commands/access/revoke-invite-link'
+import { voteOptionCommand } from '../commands/vote/option'
+import { voteEventCommand } from '../commands/vote/event'
+import { votesListCommand } from '../commands/votes/list'
 
 const trips = defineCommand({
     meta: { name: 'trips', description: 'View and manage trips.' },
@@ -95,6 +105,34 @@ const keys = defineCommand({
     subCommands: { list: keysListCommand, revoke: keysRevokeCommand },
 })
 
+const access = defineCommand({
+    meta: { name: 'access', description: 'Manage trip access and invite links.' },
+    subCommands: {
+        list: accessListCommand,
+        invite: accessInviteCommand,
+        'set-role': accessSetRoleCommand,
+        revoke: accessRevokeCommand,
+        'create-invite-link': accessCreateInviteLinkCommand,
+        'list-invite-links': accessListInviteLinksCommand,
+        'revoke-invite-link': accessRevokeInviteLinkCommand,
+    },
+})
+
+const vote = defineCommand({
+    meta: { name: 'vote', description: 'Cast votes on options and events.' },
+    subCommands: {
+        option: voteOptionCommand,
+        event: voteEventCommand,
+    },
+})
+
+const votes = defineCommand({
+    meta: { name: 'votes', description: 'List votes cast on a variant.' },
+    subCommands: {
+        list: votesListCommand,
+    },
+})
+
 const main = defineCommand({
     meta: {
         name: 'mna',
@@ -111,6 +149,9 @@ const main = defineCommand({
         options,
         events,
         keys,
+        access,
+        vote,
+        votes,
         config: configCommand,
     },
 })
