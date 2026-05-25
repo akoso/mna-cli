@@ -6,13 +6,44 @@
 It also ships as a [Claude Code](https://claude.com/claude-code) skill so Claude
 can plan, view, and (in later phases) modify trips on your behalf.
 
-Status: **alpha** — Phase 0 is read-only against the existing public API.
-Future phases add full UI parity for writes, goals, collections, and group
-features.
+Status: **pre-1.0, alpha.** Tagged releases publish binaries to GitHub
+Releases. npm and Homebrew distribution land with the first tag.
 
 ## Install
 
-Not yet published to npm or Homebrew. Run from source:
+### npm (Node 20+)
+
+```bash
+npm install -g @mynextadventure/cli
+```
+
+This installs the `mna` binary. It bundles all dependencies as a single
+JS file; no Bun required.
+
+### Homebrew (macOS + Linux)
+
+```bash
+brew install mynextadventure/tap/mna
+```
+
+Installs a precompiled native binary. The tap is updated per release; see
+[RELEASING.md](./RELEASING.md).
+
+### Pre-built binary from GitHub Releases
+
+```bash
+# Pick the right artifact for your OS/arch:
+#   mna-darwin-arm64.tar.gz   (Apple Silicon)
+#   mna-darwin-x64.tar.gz     (Intel Mac)
+#   mna-linux-x64.tar.gz      (Linux x86_64)
+curl -L -o mna.tar.gz \
+  https://github.com/akoso/mna-cli/releases/latest/download/mna-darwin-arm64.tar.gz
+tar -xzf mna.tar.gz
+mv mna-darwin-arm64 /usr/local/bin/mna
+mna --version
+```
+
+### From source (development)
 
 ```bash
 git clone https://github.com/mynextadventure/mna-cli
@@ -22,7 +53,7 @@ bun run codegen
 bun link
 ```
 
-`mna` should then be on your PATH.
+`mna` should then be on your PATH. See [DEVELOPMENT.md](./DEVELOPMENT.md).
 
 ## Quickstart
 
