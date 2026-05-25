@@ -1842,6 +1842,743 @@
         ]
       }
     },
+    "/v1/goals": {
+      "get": {
+        "operationId": "GoalsV1Controller_list",
+        "summary": "List the caller's travel goals, optionally filtered by status, collection or trip.",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "dreaming",
+                "planning",
+                "visited"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "collection",
+            "required": false,
+            "in": "query",
+            "description": "Collection id to filter by.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tripId",
+            "required": false,
+            "in": "query",
+            "description": "Trip id to filter by linked trip.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalListV1Dto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "GoalsV1Controller_create",
+        "summary": "Create a new travel goal.",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGoalV1Dto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TravelGoalV1Dto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/goals/{goalId}": {
+      "get": {
+        "operationId": "GoalsV1Controller_findOne",
+        "summary": "Fetch a single goal by id.",
+        "parameters": [
+          {
+            "name": "goalId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TravelGoalV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Goal not found or not owned by caller."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "GoalsV1Controller_update",
+        "summary": "Update an existing goal.",
+        "parameters": [
+          {
+            "name": "goalId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGoalV1Dto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TravelGoalV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Goal not found or not owned by caller."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "GoalsV1Controller_delete",
+        "summary": "Delete a goal.",
+        "parameters": [
+          {
+            "name": "goalId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteGoalResultV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Goal not found or not owned by caller."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/goals/quick-add": {
+      "post": {
+        "operationId": "GoalsV1Controller_quickAdd",
+        "summary": "Quick-add a goal by name or URL — server detects which.",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuickAddGoalV1Dto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TravelGoalV1Dto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/goals/{goalId}/link-trip": {
+      "post": {
+        "operationId": "GoalsV1Controller_linkTrip",
+        "summary": "Link a goal to a trip (sets status to \"planning\").",
+        "parameters": [
+          {
+            "name": "goalId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkGoalToTripV1Dto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TravelGoalV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Goal not found or not owned by caller."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/goals/{goalId}/unlink-trip": {
+      "post": {
+        "operationId": "GoalsV1Controller_unlinkTrip",
+        "summary": "Unlink a goal from a trip (reverts status to \"dreaming\").",
+        "parameters": [
+          {
+            "name": "goalId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TravelGoalV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Goal not found or not owned by caller."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/goals/{goalId}/mark-visited": {
+      "post": {
+        "operationId": "GoalsV1Controller_markVisited",
+        "summary": "Mark a goal as visited (sets status to \"visited\" and stamps the date).",
+        "parameters": [
+          {
+            "name": "goalId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkGoalVisitedV1Dto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TravelGoalV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Goal not found or not owned by caller."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/goals/{goalId}/mark-dreaming": {
+      "post": {
+        "operationId": "GoalsV1Controller_markDreaming",
+        "summary": "Reset a goal back to \"dreaming\" — clears visited date and trip link.",
+        "parameters": [
+          {
+            "name": "goalId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TravelGoalV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Goal not found or not owned by caller."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/collections": {
+      "get": {
+        "operationId": "CollectionsV1Controller_list",
+        "summary": "List the caller's collections (headers only — no nested goals).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionListV1Dto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "CollectionsV1Controller_create",
+        "summary": "Create a new collection.",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCollectionV1Dto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalCollectionV1Dto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/collections/{collectionId}": {
+      "get": {
+        "operationId": "CollectionsV1Controller_findOne",
+        "summary": "Fetch a collection with its nested goals populated.",
+        "parameters": [
+          {
+            "name": "collectionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalCollectionV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Collection not found or not owned by caller."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "CollectionsV1Controller_update",
+        "summary": "Update a collection. Setting visibility to non-private auto-generates a share token.",
+        "parameters": [
+          {
+            "name": "collectionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCollectionV1Dto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalCollectionV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Collection not found or not owned by caller."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "CollectionsV1Controller_delete",
+        "summary": "Delete a collection (removes the reference from every goal that referenced it).",
+        "parameters": [
+          {
+            "name": "collectionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteCollectionResultV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Collection not found or not owned by caller."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/collections/{collectionId}/goals": {
+      "post": {
+        "operationId": "CollectionsV1Controller_modifyGoals",
+        "summary": "Add and/or remove goals from a collection. Provide {add: [], remove: []} ids.",
+        "parameters": [
+          {
+            "name": "collectionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModifyCollectionGoalsV1Dto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalCollectionV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Collection not found or not owned by caller."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/collections/{collectionId}/share": {
+      "post": {
+        "operationId": "CollectionsV1Controller_share",
+        "summary": "Generate (or return) a share token for the collection. Idempotent.",
+        "parameters": [
+          {
+            "name": "collectionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionShareTokenV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Collection not found or not owned by caller."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/collections/shared/{token}": {
+      "get": {
+        "operationId": "SharedCollectionsV1Controller_findByToken",
+        "summary": "Anonymous read of a collection by share token. No API key required.",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalCollectionV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Token not found, expired, or collection is private."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ]
+      }
+    },
     "/v1/me": {
       "get": {
         "operationId": "MeV1Controller_getMe",
@@ -3602,6 +4339,690 @@
         },
         "required": [
           "votes"
+        ]
+      },
+      "GoalCoordinatesV1Dto": {
+        "type": "object",
+        "properties": {
+          "lat": {
+            "type": "number"
+          },
+          "lng": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "lat",
+          "lng"
+        ]
+      },
+      "GoalLocationV1Dto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "formattedAddress": {
+            "type": "string"
+          },
+          "coordinates": {
+            "$ref": "#/components/schemas/GoalCoordinatesV1Dto"
+          },
+          "googlePlaceId": {
+            "type": "string"
+          }
+        }
+      },
+      "GoalLinkV1Dto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "URL the link points to."
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "TravelGoalV1Dto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "location": {
+            "$ref": "#/components/schemas/GoalLocationV1Dto"
+          },
+          "country": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "country",
+              "region",
+              "city",
+              "place",
+              "experience"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "dreaming",
+              "planning",
+              "visited"
+            ]
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "someday",
+              "soon",
+              "must_do"
+            ]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "userUploadedImageUrl": {
+            "type": "string"
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GoalLinkV1Dto"
+            }
+          },
+          "bestTimeToVisit": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "spring",
+                "summer",
+                "autumn",
+                "winter",
+                "year_round"
+              ]
+            }
+          },
+          "estimatedBudget": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "estimatedDuration": {
+            "type": "string"
+          },
+          "linkedTripId": {
+            "type": "string",
+            "description": "Trip id this goal is currently linked to (when status=planning or visited)."
+          },
+          "linkedTripName": {
+            "type": "string"
+          },
+          "visitedDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "collectionIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "name",
+          "type",
+          "status",
+          "priority",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "GoalListV1Dto": {
+        "type": "object",
+        "properties": {
+          "goals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TravelGoalV1Dto"
+            }
+          }
+        },
+        "required": [
+          "goals"
+        ]
+      },
+      "CreateGoalV1Dto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Goal name (e.g. \"See the Northern Lights\")."
+          },
+          "description": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Free-form notes."
+          },
+          "location": {
+            "$ref": "#/components/schemas/GoalLocationV1Dto"
+          },
+          "country": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "country",
+              "region",
+              "city",
+              "place",
+              "experience"
+            ],
+            "description": "Defaults to \"place\" if omitted."
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "someday",
+              "soon",
+              "must_do"
+            ],
+            "description": "Defaults to \"someday\" if omitted."
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "userUploadedImageUrl": {
+            "type": "string"
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GoalLinkV1Dto"
+            }
+          },
+          "bestTimeToVisit": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "spring",
+                "summer",
+                "autumn",
+                "winter",
+                "year_round"
+              ]
+            }
+          },
+          "estimatedBudget": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "estimatedDuration": {
+            "type": "string",
+            "description": "Free-form duration string (e.g. \"3 days\", \"1 week\")."
+          },
+          "collectionIds": {
+            "description": "Collection ids this goal will be added to.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "QuickAddGoalV1Dto": {
+        "type": "object",
+        "properties": {
+          "input": {
+            "type": "string",
+            "description": "A name or URL — the server detects which and stores accordingly."
+          }
+        },
+        "required": [
+          "input"
+        ]
+      },
+      "UpdateGoalV1Dto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "location": {
+            "$ref": "#/components/schemas/GoalLocationV1Dto"
+          },
+          "country": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "country",
+              "region",
+              "city",
+              "place",
+              "experience"
+            ]
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "someday",
+              "soon",
+              "must_do"
+            ]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "userUploadedImageUrl": {
+            "type": "string"
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GoalLinkV1Dto"
+            }
+          },
+          "bestTimeToVisit": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "spring",
+                "summer",
+                "autumn",
+                "winter",
+                "year_round"
+              ]
+            }
+          },
+          "estimatedBudget": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "estimatedDuration": {
+            "type": "string"
+          },
+          "collectionIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "DeleteGoalResultV1Dto": {
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string",
+            "description": "Id of the deleted goal."
+          }
+        },
+        "required": [
+          "deleted",
+          "id"
+        ]
+      },
+      "LinkGoalToTripV1Dto": {
+        "type": "object",
+        "properties": {
+          "tripId": {
+            "type": "string",
+            "description": "Trip id to link the goal to."
+          },
+          "tripName": {
+            "type": "string",
+            "description": "Trip name (echoed back on the goal for display)."
+          }
+        },
+        "required": [
+          "tripId",
+          "tripName"
+        ]
+      },
+      "MarkGoalVisitedV1Dto": {
+        "type": "object",
+        "properties": {
+          "visitedDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Defaults to \"now\" when omitted."
+          }
+        }
+      },
+      "GoalCollectionHeaderV1Dto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "emoji": {
+            "type": "string"
+          },
+          "coverImageUrl": {
+            "type": "string"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "private",
+              "shared",
+              "public"
+            ]
+          },
+          "goalCount": {
+            "type": "number"
+          },
+          "visitedCount": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "visibility",
+          "goalCount",
+          "visitedCount",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CollectionListV1Dto": {
+        "type": "object",
+        "properties": {
+          "collections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GoalCollectionHeaderV1Dto"
+            }
+          }
+        },
+        "required": [
+          "collections"
+        ]
+      },
+      "GoalCollectionV1Dto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "emoji": {
+            "type": "string"
+          },
+          "coverImageUrl": {
+            "type": "string"
+          },
+          "goalIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "goals": {
+            "description": "Populated on findById / share-token reads.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TravelGoalV1Dto"
+            }
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "private",
+              "shared",
+              "public"
+            ]
+          },
+          "shareToken": {
+            "type": "string",
+            "description": "Opaque token for non-private collections; safe to share."
+          },
+          "goalCount": {
+            "type": "number"
+          },
+          "visitedCount": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "name",
+          "goalIds",
+          "visibility",
+          "goalCount",
+          "visitedCount",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateCollectionV1Dto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Collection name (e.g. \"Bucket list 2030\")."
+          },
+          "description": {
+            "type": "string"
+          },
+          "emoji": {
+            "type": "string",
+            "description": "Emoji for a fun visual identity (e.g. \"🌍\")."
+          },
+          "coverImageUrl": {
+            "type": "string"
+          },
+          "goalIds": {
+            "description": "Goal ids to seed the collection with.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "private",
+              "shared",
+              "public"
+            ],
+            "description": "Defaults to \"private\"."
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "UpdateCollectionV1Dto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "emoji": {
+            "type": "string"
+          },
+          "coverImageUrl": {
+            "type": "string"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "private",
+              "shared",
+              "public"
+            ],
+            "description": "Setting to non-private will auto-generate a share token if absent."
+          }
+        }
+      },
+      "DeleteCollectionResultV1Dto": {
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string",
+            "description": "Id of the deleted collection."
+          }
+        },
+        "required": [
+          "deleted",
+          "id"
+        ]
+      },
+      "ModifyCollectionGoalsV1Dto": {
+        "type": "object",
+        "properties": {
+          "add": {
+            "description": "Goal ids to add to the collection.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "remove": {
+            "description": "Goal ids to remove from the collection.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "CollectionShareTokenV1Dto": {
+        "type": "object",
+        "properties": {
+          "shareToken": {
+            "type": "string",
+            "description": "Opaque share token. Treat as a credential."
+          }
+        },
+        "required": [
+          "shareToken"
         ]
       },
       "MeV1Dto": {

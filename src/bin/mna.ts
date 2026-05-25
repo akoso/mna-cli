@@ -41,6 +41,25 @@ import { accessRevokeInviteLinkCommand } from '../commands/access/revoke-invite-
 import { voteOptionCommand } from '../commands/vote/option'
 import { voteEventCommand } from '../commands/vote/event'
 import { votesListCommand } from '../commands/votes/list'
+import { goalsListCommand } from '../commands/goals/list'
+import { goalsShowCommand } from '../commands/goals/show'
+import { goalsAddCommand } from '../commands/goals/add'
+import { goalsQuickAddCommand } from '../commands/goals/quick-add'
+import { goalsEditCommand } from '../commands/goals/edit'
+import { goalsDeleteCommand } from '../commands/goals/delete'
+import { goalsLinkTripCommand } from '../commands/goals/link-trip'
+import { goalsUnlinkTripCommand } from '../commands/goals/unlink-trip'
+import { goalsMarkVisitedCommand } from '../commands/goals/mark-visited'
+import { goalsMarkDreamingCommand } from '../commands/goals/mark-dreaming'
+import { collectionsListCommand } from '../commands/collections/list'
+import { collectionsShowCommand } from '../commands/collections/show'
+import { collectionsCreateCommand } from '../commands/collections/create'
+import { collectionsEditCommand } from '../commands/collections/edit'
+import { collectionsDeleteCommand } from '../commands/collections/delete'
+import { collectionsAddGoalCommand } from '../commands/collections/add-goal'
+import { collectionsRemoveGoalCommand } from '../commands/collections/remove-goal'
+import { collectionsShareCommand } from '../commands/collections/share'
+import { collectionsOpenSharedCommand } from '../commands/collections/open-shared'
 
 const trips = defineCommand({
     meta: { name: 'trips', description: 'View and manage trips.' },
@@ -133,6 +152,37 @@ const votes = defineCommand({
     },
 })
 
+const goals = defineCommand({
+    meta: { name: 'goals', description: 'Manage travel goals.' },
+    subCommands: {
+        list: goalsListCommand,
+        show: goalsShowCommand,
+        add: goalsAddCommand,
+        'quick-add': goalsQuickAddCommand,
+        edit: goalsEditCommand,
+        delete: goalsDeleteCommand,
+        'link-trip': goalsLinkTripCommand,
+        'unlink-trip': goalsUnlinkTripCommand,
+        'mark-visited': goalsMarkVisitedCommand,
+        'mark-dreaming': goalsMarkDreamingCommand,
+    },
+})
+
+const collections = defineCommand({
+    meta: { name: 'collections', description: 'Manage goal collections.' },
+    subCommands: {
+        list: collectionsListCommand,
+        show: collectionsShowCommand,
+        create: collectionsCreateCommand,
+        edit: collectionsEditCommand,
+        delete: collectionsDeleteCommand,
+        'add-goal': collectionsAddGoalCommand,
+        'remove-goal': collectionsRemoveGoalCommand,
+        share: collectionsShareCommand,
+        'open-shared': collectionsOpenSharedCommand,
+    },
+})
+
 const main = defineCommand({
     meta: {
         name: 'mna',
@@ -152,6 +202,8 @@ const main = defineCommand({
         access,
         vote,
         votes,
+        goals,
+        collections,
         config: configCommand,
     },
 })
