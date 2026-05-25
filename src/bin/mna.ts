@@ -20,6 +20,15 @@ import { destinationsAddCommand } from '../commands/destinations/add'
 import { destinationsEditCommand } from '../commands/destinations/edit'
 import { destinationsReorderCommand } from '../commands/destinations/reorder'
 import { destinationsDeleteCommand } from '../commands/destinations/delete'
+import { optionsAddCommand } from '../commands/options/add'
+import { optionsEditCommand } from '../commands/options/edit'
+import { optionsDeleteCommand } from '../commands/options/delete'
+import { optionsSelectCommand } from '../commands/options/select'
+import { optionsDeselectCommand } from '../commands/options/deselect'
+import { eventsAddCommand } from '../commands/events/add'
+import { eventsEditCommand } from '../commands/events/edit'
+import { eventsToggleCommand } from '../commands/events/toggle'
+import { eventsDeleteCommand } from '../commands/events/delete'
 import { keysListCommand } from '../commands/keys/list'
 import { keysRevokeCommand } from '../commands/keys/revoke'
 
@@ -57,6 +66,30 @@ const destinations = defineCommand({
     },
 })
 
+const options = defineCommand({
+    meta: {
+        name: 'options',
+        description: 'Manage destination options (accommodation | transport | getting-around).',
+    },
+    subCommands: {
+        add: optionsAddCommand,
+        edit: optionsEditCommand,
+        delete: optionsDeleteCommand,
+        select: optionsSelectCommand,
+        deselect: optionsDeselectCommand,
+    },
+})
+
+const events = defineCommand({
+    meta: { name: 'events', description: 'Manage events on a variant.' },
+    subCommands: {
+        add: eventsAddCommand,
+        edit: eventsEditCommand,
+        toggle: eventsToggleCommand,
+        delete: eventsDeleteCommand,
+    },
+})
+
 const keys = defineCommand({
     meta: { name: 'keys', description: 'Manage API keys.' },
     subCommands: { list: keysListCommand, revoke: keysRevokeCommand },
@@ -75,6 +108,8 @@ const main = defineCommand({
         trips,
         variants,
         destinations,
+        options,
+        events,
         keys,
         config: configCommand,
     },

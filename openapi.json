@@ -984,6 +984,377 @@
         ]
       }
     },
+    "/v1/trips/{id}/variants/{variantId}/destinations/{destinationKey}/options/{kind}/{optionKey}": {
+      "patch": {
+        "operationId": "OptionsWritesV1Controller_update",
+        "summary": "Update fields on a destination option (accommodation | transport | getting-around).",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "variantId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "destinationKey",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "optionKey",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Option updated."
+          },
+          "400": {
+            "description": "Unknown option kind."
+          },
+          "404": {
+            "description": "Trip, variant, destination, or option not found, or no edit access."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "OptionsWritesV1Controller_delete",
+        "summary": "Delete a destination option (accommodation | transport | getting-around).",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "variantId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "destinationKey",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "optionKey",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteOptionResultV1Dto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unknown option kind."
+          },
+          "404": {
+            "description": "Trip, variant, destination, or option not found, or no edit access."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/trips/{id}/variants/{variantId}/destinations/{destinationKey}/options/{kind}/deselect": {
+      "put": {
+        "operationId": "OptionsWritesV1Controller_deselect",
+        "summary": "Clear the selected option of the given kind on a destination.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "variantId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "destinationKey",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeselectOptionResultV1Dto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unknown option kind."
+          },
+          "404": {
+            "description": "Trip, variant, or destination not found, or no edit access."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/trips/{id}/variants/{variantId}/events/{eventKey}": {
+      "patch": {
+        "operationId": "EventsWritesV1Controller_update",
+        "summary": "Update fields on an event.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "variantId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "eventKey",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEventV1Dto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Event updated."
+          },
+          "404": {
+            "description": "Trip, variant, or event not found, or no edit access."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "EventsWritesV1Controller_delete",
+        "summary": "Delete an event from a variant.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "variantId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "eventKey",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteEventResultV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Trip, variant, or event not found, or no edit access."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/trips/{id}/variants/{variantId}/events/{eventKey}/toggle": {
+      "post": {
+        "operationId": "EventsWritesV1Controller_toggle",
+        "summary": "Toggle an event's selected state on the variant.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "variantId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "eventKey",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToggleEventResultV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Trip, variant, or event not found, or no edit access."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
     "/v1/me": {
       "get": {
         "operationId": "MeV1Controller_getMe",
@@ -2260,6 +2631,118 @@
         "required": [
           "deleted",
           "destinationKey"
+        ]
+      },
+      "DeleteOptionResultV1Dto": {
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "boolean"
+          },
+          "key": {
+            "type": "string",
+            "description": "Key of the deleted option."
+          }
+        },
+        "required": [
+          "deleted",
+          "key"
+        ]
+      },
+      "DeselectOptionResultV1Dto": {
+        "type": "object",
+        "properties": {
+          "deselected": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "deselected"
+        ]
+      },
+      "UpdateEventV1Dto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Display name of the event."
+          },
+          "start": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "end": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "location": {
+            "$ref": "#/components/schemas/CreateOptionLocationV1Dto"
+          },
+          "eventType": {
+            "type": "string",
+            "enum": [
+              "concert",
+              "course",
+              "sport",
+              "entertainment",
+              "museum",
+              "trip",
+              "restaurant",
+              "shopping",
+              "other"
+            ]
+          },
+          "maxTravelTimeToEventInMinutes": {
+            "type": "number"
+          },
+          "totalCost": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "link": {
+            "type": "string"
+          },
+          "userUploadedImageUrl": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "ToggleEventResultV1Dto": {
+        "type": "object",
+        "properties": {
+          "eventKey": {
+            "type": "string",
+            "description": "Key of the toggled event."
+          },
+          "selected": {
+            "type": "boolean",
+            "description": "New selected state after the toggle."
+          }
+        },
+        "required": [
+          "eventKey",
+          "selected"
+        ]
+      },
+      "DeleteEventResultV1Dto": {
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "boolean"
+          },
+          "eventKey": {
+            "type": "string",
+            "description": "Key of the deleted event."
+          }
+        },
+        "required": [
+          "deleted",
+          "eventKey"
         ]
       },
       "MeV1Dto": {
