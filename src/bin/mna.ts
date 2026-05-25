@@ -16,6 +16,10 @@ import { variantsDuplicateCommand } from '../commands/variants/duplicate'
 import { variantsEditCommand } from '../commands/variants/edit'
 import { variantsSelectCommand } from '../commands/variants/select'
 import { variantsDeleteCommand } from '../commands/variants/delete'
+import { destinationsAddCommand } from '../commands/destinations/add'
+import { destinationsEditCommand } from '../commands/destinations/edit'
+import { destinationsReorderCommand } from '../commands/destinations/reorder'
+import { destinationsDeleteCommand } from '../commands/destinations/delete'
 import { keysListCommand } from '../commands/keys/list'
 import { keysRevokeCommand } from '../commands/keys/revoke'
 
@@ -43,6 +47,16 @@ const variants = defineCommand({
     },
 })
 
+const destinations = defineCommand({
+    meta: { name: 'destinations', description: 'Manage destinations within a variant.' },
+    subCommands: {
+        add: destinationsAddCommand,
+        edit: destinationsEditCommand,
+        reorder: destinationsReorderCommand,
+        delete: destinationsDeleteCommand,
+    },
+})
+
 const keys = defineCommand({
     meta: { name: 'keys', description: 'Manage API keys.' },
     subCommands: { list: keysListCommand, revoke: keysRevokeCommand },
@@ -60,6 +74,7 @@ const main = defineCommand({
         whoami: whoamiCommand,
         trips,
         variants,
+        destinations,
         keys,
         config: configCommand,
     },

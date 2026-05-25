@@ -766,6 +766,224 @@
         ]
       }
     },
+    "/v1/trips/{id}/variants/{variantId}/destinations": {
+      "post": {
+        "operationId": "DestinationsV1Controller_create",
+        "summary": "Add a new destination to a variant.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "variantId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDestinationV1Dto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateDestinationResultV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Trip or variant not found, or no edit access."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/trips/{id}/variants/{variantId}/destinations/{destinationKey}": {
+      "patch": {
+        "operationId": "DestinationsV1Controller_update",
+        "summary": "Update fields on a destination.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "variantId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "destinationKey",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDestinationV1Dto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Destination updated."
+          },
+          "404": {
+            "description": "Trip, variant, or destination not found, or no edit access."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "DestinationsV1Controller_delete",
+        "summary": "Delete a destination from a variant.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "variantId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "destinationKey",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteDestinationResultV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Trip, variant, or destination not found, or no edit access."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/trips/{id}/variants/{variantId}/destinations/reorder": {
+      "post": {
+        "operationId": "DestinationsV1Controller_reorder",
+        "summary": "Reorder destinations within a variant.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "variantId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderDestinationsV1Dto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Destinations reordered."
+          },
+          "404": {
+            "description": "Trip or variant not found, or no edit access."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
     "/v1/me": {
       "get": {
         "operationId": "MeV1Controller_getMe",
@@ -1962,6 +2180,86 @@
         "required": [
           "deleted",
           "id"
+        ]
+      },
+      "CreateDestinationV1Dto": {
+        "type": "object",
+        "properties": {
+          "destination": {
+            "type": "string",
+            "description": "Place name for this destination (e.g. \"Lisbon, Portugal\")."
+          },
+          "isReturnToHome": {
+            "type": "boolean",
+            "description": "Marks this destination as the return-to-home leg. Server keeps it pinned to the end."
+          },
+          "notes": {
+            "type": "string",
+            "description": "Free-form destination notes."
+          }
+        },
+        "required": [
+          "destination"
+        ]
+      },
+      "CreateDestinationResultV1Dto": {
+        "type": "object",
+        "properties": {
+          "destinationKey": {
+            "type": "string",
+            "description": "Server-assigned key for the newly-created destination."
+          }
+        },
+        "required": [
+          "destinationKey"
+        ]
+      },
+      "UpdateDestinationV1Dto": {
+        "type": "object",
+        "properties": {
+          "destination": {
+            "type": "string",
+            "description": "New place name."
+          },
+          "isReturnToHome": {
+            "type": "boolean",
+            "description": "Toggle return-to-home semantics."
+          },
+          "notes": {
+            "type": "string",
+            "description": "New free-form notes."
+          }
+        }
+      },
+      "ReorderDestinationsV1Dto": {
+        "type": "object",
+        "properties": {
+          "order": {
+            "description": "Destination keys in the desired new order. Keys not present are sorted to the front in their existing relative order.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "order"
+        ]
+      },
+      "DeleteDestinationResultV1Dto": {
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "boolean"
+          },
+          "destinationKey": {
+            "type": "string",
+            "description": "Key of the deleted destination."
+          }
+        },
+        "required": [
+          "deleted",
+          "destinationKey"
         ]
       },
       "MeV1Dto": {
