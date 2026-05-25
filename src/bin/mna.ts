@@ -11,6 +11,11 @@ import { tripsEditCommand } from '../commands/trips/edit'
 import { tripsDeleteCommand } from '../commands/trips/delete'
 import { tripsShareCommand } from '../commands/trips/share'
 import { tripsUnshareCommand } from '../commands/trips/unshare'
+import { variantsAddCommand } from '../commands/variants/add'
+import { variantsDuplicateCommand } from '../commands/variants/duplicate'
+import { variantsEditCommand } from '../commands/variants/edit'
+import { variantsSelectCommand } from '../commands/variants/select'
+import { variantsDeleteCommand } from '../commands/variants/delete'
 import { keysListCommand } from '../commands/keys/list'
 import { keysRevokeCommand } from '../commands/keys/revoke'
 
@@ -24,6 +29,17 @@ const trips = defineCommand({
         delete: tripsDeleteCommand,
         share: tripsShareCommand,
         unshare: tripsUnshareCommand,
+    },
+})
+
+const variants = defineCommand({
+    meta: { name: 'variants', description: 'Manage trip variants.' },
+    subCommands: {
+        add: variantsAddCommand,
+        duplicate: variantsDuplicateCommand,
+        edit: variantsEditCommand,
+        select: variantsSelectCommand,
+        delete: variantsDeleteCommand,
     },
 })
 
@@ -43,6 +59,7 @@ const main = defineCommand({
         logout: logoutCommand,
         whoami: whoamiCommand,
         trips,
+        variants,
         keys,
         config: configCommand,
     },

@@ -572,6 +572,200 @@
         ]
       }
     },
+    "/v1/trips/{id}/variants": {
+      "post": {
+        "operationId": "VariantsV1Controller_create",
+        "summary": "Create a new variant on a trip.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVariantV1Dto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DuplicateVariantResultV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Trip not found or no edit access."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/trips/{id}/variants/{variantId}/duplicate": {
+      "post": {
+        "operationId": "VariantsV1Controller_duplicate",
+        "summary": "Duplicate a variant on a trip.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "variantId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DuplicateVariantResultV1Dto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Trip or variant not found, or no edit access."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
+    "/v1/trips/{id}/variants/{variantId}": {
+      "patch": {
+        "operationId": "VariantsV1Controller_update",
+        "summary": "Update fields on an existing variant.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "variantId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateVariantV1Dto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Variant updated."
+          },
+          "404": {
+            "description": "Trip or variant not found, or no edit access."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "VariantsV1Controller_delete",
+        "summary": "Delete a variant from a trip.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "variantId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteVariantResultV1Dto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Cannot delete the only variant of a trip."
+          },
+          "404": {
+            "description": "Trip or variant not found, or no edit access."
+          }
+        },
+        "tags": [
+          "Public API v1"
+        ],
+        "security": [
+          {
+            "X-API-Key": []
+          }
+        ]
+      }
+    },
     "/v1/me": {
       "get": {
         "operationId": "MeV1Controller_getMe",
@@ -1684,6 +1878,90 @@
         },
         "required": [
           "removedCount"
+        ]
+      },
+      "CreateVariantV1Dto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Variant name (e.g. \"Beach option\", \"Mountain option\")."
+          },
+          "dates": {
+            "description": "Either an exact-dates or flexi-dates structure for this variant.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ExactDatesV1Dto"
+              },
+              {
+                "$ref": "#/components/schemas/FlexiDatesV1Dto"
+              }
+            ]
+          },
+          "notes": {
+            "type": "string",
+            "description": "Free-form variant notes."
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "DuplicateVariantResultV1Dto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID of the newly-created variant."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the newly-created variant (typically \"<source> (copy)\")."
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "UpdateVariantV1Dto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "New variant name."
+          },
+          "dates": {
+            "description": "Either an exact-dates or flexi-dates structure for this variant.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ExactDatesV1Dto"
+              },
+              {
+                "$ref": "#/components/schemas/FlexiDatesV1Dto"
+              }
+            ]
+          },
+          "notes": {
+            "type": "string",
+            "description": "Free-form variant notes."
+          }
+        }
+      },
+      "DeleteVariantResultV1Dto": {
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string",
+            "description": "ID of the deleted variant."
+          }
+        },
+        "required": [
+          "deleted",
+          "id"
         ]
       },
       "MeV1Dto": {
