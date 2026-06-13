@@ -4,6 +4,7 @@ import { loadCredentials, resolveApiKey, resolveBaseUrl } from '../../auth/crede
 import { renderJson } from '../../render/json'
 import { colors } from '../../render/colors'
 import { reportAndExit, requireApiKey } from '../../util/errors'
+import { normalizeToIsoDateTime } from '../../util/dates'
 
 export const destinationsEditCommand = defineCommand({
     meta: { name: 'edit', description: 'Update fields on a destination.' },
@@ -13,6 +14,8 @@ export const destinationsEditCommand = defineCommand({
         destinationKey: { type: 'positional', description: 'Destination key.' },
         place: { type: 'string', description: 'New place name.' },
         notes: { type: 'string', description: 'New free-form notes.' },
+        'start-date': { type: 'string', description: 'Arrival date (YYYY-MM-DD or ISO date-time).' },
+        'end-date': { type: 'string', description: 'Departure date (YYYY-MM-DD or ISO date-time).' },
         'return-to-home': {
             type: 'boolean',
             description: 'Toggle return-to-home semantics. Supports --no-return-to-home.',
@@ -27,8 +30,16 @@ export const destinationsEditCommand = defineCommand({
             if (args['return-to-home'] !== undefined) {
                 updates.isReturnToHome = args['return-to-home']
             }
+            if (args['start-date'] !== undefined) {
+                updates.startDate = normalizeToIsoDateTime(args['start-date'], '--start-date')
+            }
+            if (args['end-date'] !== undefined) {
+                updates.endDate = normalizeToIsoDateTime(args['end-date'], '--end-date')
+            }
             if (Object.keys(updates).length === 0) {
-                throw new Error('Specify at least one of --place, --notes, --return-to-home.')
+                throw new Error(
+                    'Specify at least one of --place, --notes, --start-date, --end-date, --return-to-home.',
+                )
             }
 
             const creds = await loadCredentials()

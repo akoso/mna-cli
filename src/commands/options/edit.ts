@@ -5,6 +5,7 @@ import { renderJson } from '../../render/json'
 import { colors } from '../../render/colors'
 import { reportAndExit, requireApiKey } from '../../util/errors'
 import { readJsonObject } from '../../util/json-file'
+import { applyFreeCancellation } from './free-cancellation'
 
 const KINDS = ['accommodation', 'transport', 'getting-around'] as const
 type Kind = (typeof KINDS)[number]
@@ -32,15 +33,24 @@ export const optionsEditCommand = defineCommand({
         optionKey: { type: 'positional', description: 'Option key.' },
         'from-json': {
             type: 'string',
-            required: true,
             description: 'Path to JSON file describing the partial update.',
+        },
+        'free-cancellation-until': {
+            type: 'string',
+            description:
+                'Accommodation only: free-cancellation deadline (YYYY-MM-DD or ISO date-time). Lets you skip --from-json.',
         },
         json: { type: 'boolean', default: false, description: 'Output as JSON.' },
     },
     async run({ args }) {
         try {
             assertKind(args.kind)
-            const body = await readJsonObject(args['from-json'])
+            if (args['from-json'] === undefined && args['free-cancellation-until'] === undefined) {
+                throw new Error('Specify --from-json and/or --free-cancellation-until.')
+            }
+            const body =
+                args['from-json'] !== undefined ? await readJsonObject(args['from-json']) : {}
+            applyFreeCancellation(body, args['free-cancellation-until'], args.kind)
 
             const creds = await loadCredentials()
             const apiKey = resolveApiKey(creds)

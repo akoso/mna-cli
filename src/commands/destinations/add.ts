@@ -4,6 +4,7 @@ import { loadCredentials, resolveApiKey, resolveBaseUrl } from '../../auth/crede
 import { renderJson } from '../../render/json'
 import { colors } from '../../render/colors'
 import { reportAndExit, requireApiKey } from '../../util/errors'
+import { normalizeToIsoDateTime } from '../../util/dates'
 
 export const destinationsAddCommand = defineCommand({
     meta: { name: 'add', description: 'Add a new destination to a variant.' },
@@ -12,6 +13,8 @@ export const destinationsAddCommand = defineCommand({
         variantId: { type: 'positional', description: 'Variant ID.' },
         place: { type: 'string', required: true, description: 'Place name (e.g. "Lisbon, Portugal").' },
         notes: { type: 'string', description: 'Free-form destination notes.' },
+        'start-date': { type: 'string', description: 'Arrival date (YYYY-MM-DD or ISO date-time).' },
+        'end-date': { type: 'string', description: 'Departure date (YYYY-MM-DD or ISO date-time).' },
         'return-to-home': {
             type: 'boolean',
             default: false,
@@ -31,6 +34,12 @@ export const destinationsAddCommand = defineCommand({
                 isReturnToHome: args['return-to-home'] ?? false,
             }
             if (args.notes !== undefined) body.notes = args.notes
+            if (args['start-date'] !== undefined) {
+                body.startDate = normalizeToIsoDateTime(args['start-date'], '--start-date')
+            }
+            if (args['end-date'] !== undefined) {
+                body.endDate = normalizeToIsoDateTime(args['end-date'], '--end-date')
+            }
 
             const { data, error } = await client.POST(
                 '/v1/trips/{id}/variants/{variantId}/destinations',
