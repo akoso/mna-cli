@@ -34,6 +34,21 @@ export function createApiClient({ baseUrl, apiKey }: CreateApiClientOptions): Ap
                     (body as { message?: string } | undefined)?.message ?? `HTTP ${response.status}`
                 throw new ApiError(response.status, message, body)
             }
+
+            // Some endpoints (e.g. option creation) return a 2xx with an empty body and
+            // no `Content-Length: 0`, which makes openapi-fetch's JSON parser throw
+            // "Failed to parse JSON". Normalize empty success bodies so the parser
+            // yields `data: undefined` instead of crashing the command.
+            const text = await response.clone().text()
+            if (text.trim() === '') {
+                const headers = new Headers(response.headers)
+                headers.set('Content-Length', '0')
+                return new Response(null, {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers,
+                })
+            }
             return response
         },
     }

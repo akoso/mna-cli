@@ -2,7 +2,9 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { randomBytes } from 'node:crypto'
 import { hostname } from 'node:os'
 import { spawn } from 'node:child_process'
+import { createApiClient } from '../api/client'
 import { saveCredentials, type Credentials } from './credentials-store'
+import { fetchIdentity } from './fetch-identity'
 
 const TIMEOUT_MS = 5 * 60 * 1000
 const PORT_MIN = 1024
@@ -57,12 +59,25 @@ export async function browserLogin(input: BrowserLoginInput): Promise<BrowserLog
     const credentials: Credentials = {
         version: 1,
         apiKey,
-        user: { id: 'unknown', email: 'unknown@local', name: 'CLI user' },
+        user: await resolveUser(input.apiBaseUrl, apiKey),
         apiBaseUrl: input.apiBaseUrl,
         createdAt: new Date().toISOString(),
     }
     await saveCredentials(credentials)
     return { credentials, consentUrl }
+}
+
+/**
+ * The browser flow already proved the key is valid server-side, so a failure to
+ * fetch identity (transient network blip) shouldn't fail the whole login — fall
+ * back to a placeholder that `mna whoami --verify` can refresh later.
+ */
+async function resolveUser(apiBaseUrl: string, apiKey: string): Promise<Credentials['user']> {
+    try {
+        return await fetchIdentity(createApiClient({ baseUrl: apiBaseUrl, apiKey }))
+    } catch {
+        return { id: 'unknown', email: 'unknown@local', name: 'CLI user' }
+    }
 }
 
 interface CallbackListener {
@@ -80,6 +95,9 @@ async function listenForCallback(expectedState: string): Promise<CallbackListene
         })
 
         const server = createServer((req: IncomingMessage, res: ServerResponse) => {
+            // Without this the browser holds a keep-alive socket open, which keeps
+            // the event loop alive and hangs the CLI after a successful login.
+            res.setHeader('Connection', 'close')
             try {
                 if (!req.url) throw new Error('Empty request URL')
                 const url = new URL(req.url, 'http://127.0.0.1')
@@ -108,6 +126,7 @@ async function listenForCallback(expectedState: string): Promise<CallbackListene
                 resolveCallback({ apiKey: key })
             } finally {
                 server.close()
+                server.closeAllConnections?.()
             }
         })
 
