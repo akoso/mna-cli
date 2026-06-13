@@ -50,8 +50,13 @@ git clone https://github.com/mynextadventure/mna-cli
 cd mna-cli
 bun install
 bun run codegen
+bun run build
 bun link
 ```
+
+`bun run build` is required before `bun link` — it produces `dist/mna.js`, the bin
+target. `bun link` only creates the `mna` symlink if that file already exists, so
+skipping the build leaves you with `command not found: mna`.
 
 `mna` should then be on your PATH. See [DEVELOPMENT.md](./DEVELOPMENT.md).
 
@@ -110,8 +115,8 @@ Every command supports `--json` for piping into `jq` or Claude.
 
 | Command | Description |
 |---|---|
-| `mna destinations add <tripId> <variantId> --place <name> [--notes=...] [--return-to-home]` | Add a destination. |
-| `mna destinations edit <tripId> <variantId> <destinationKey> [--place=...] [--notes=...] [--no-return-to-home]` | Update destination. |
+| `mna destinations add <tripId> <variantId> --place <name> [--notes=...] [--start-date=YYYY-MM-DD] [--end-date=YYYY-MM-DD] [--return-to-home]` | Add a destination. |
+| `mna destinations edit <tripId> <variantId> <destinationKey> [--place=...] [--notes=...] [--start-date=YYYY-MM-DD] [--end-date=YYYY-MM-DD] [--no-return-to-home]` | Update destination. |
 | `mna destinations reorder <tripId> <variantId> --order=key1,key2,key3` | Reorder destinations. |
 | `mna destinations delete <tripId> <variantId> <destinationKey> [--yes]` | Delete a destination. |
 
@@ -119,8 +124,8 @@ Every command supports `--json` for piping into `jq` or Claude.
 
 | Command | Description |
 |---|---|
-| `mna options add <tripId> <variantId> <destinationKey> <kind> --from-json=<file>` | Add an option from JSON. |
-| `mna options edit <tripId> <variantId> <destinationKey> <kind> <optionKey> --from-json=<file>` | Edit an option. |
+| `mna options add <tripId> <variantId> <destinationKey> <kind> --from-json=<file> [--free-cancellation-until=<date>]` | Add an option from JSON. `--free-cancellation-until` (accommodation only) merges into the body. |
+| `mna options edit <tripId> <variantId> <destinationKey> <kind> <optionKey> [--from-json=<file>] [--free-cancellation-until=<date>]` | Edit an option. For accommodation, `--free-cancellation-until` alone updates the date without a JSON file. |
 | `mna options delete <tripId> <variantId> <destinationKey> <kind> <optionKey> [--yes]` | Delete an option. |
 | `mna options select <tripId> <variantId> <destinationKey> <kind> <optionKey>` | Select an option. |
 | `mna options deselect <tripId> <variantId> <destinationKey> <kind>` | Deselect the current option. |
