@@ -7,13 +7,13 @@ description: Use when the user wants to view, create, or manage their trips,
 
 # Managing trips with My Next Adventure
 
-You have access to the `mna` CLI for the user's trips on mynextadventure.cloud.
+You have access to the `mna` CLI for the user's trips on app.mynextadventure.cloud.
 
 ## Bootstrap
 
 Run `mna whoami` first. If it fails with "Not logged in", ask the user to run
 `mna login --paste-token <key>` themselves — they generate the key by signing
-in at https://mynextadventure.cloud, opening the user menu, and clicking
+in at https://app.mynextadventure.cloud, opening the user menu, and clicking
 "API Keys".
 
 Always pass `--json` so output is parseable.

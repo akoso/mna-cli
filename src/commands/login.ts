@@ -5,7 +5,7 @@ import { resolveBaseUrl } from '../auth/credentials-store'
 import { reportAndExit } from '../util/errors'
 import { colors } from '../render/colors'
 
-const DEFAULT_WEB_BASE = 'https://mynextadventure.cloud'
+const DEFAULT_WEB_BASE = 'https://app.mynextadventure.cloud'
 
 export const loginCommand = defineCommand({
     meta: {
@@ -19,7 +19,7 @@ export const loginCommand = defineCommand({
         },
         'web-base-url': {
             type: 'string',
-            description: 'Override the web app URL (rarely needed; defaults to mynextadventure.cloud).',
+            description: 'Override the web app URL (rarely needed; defaults to app.mynextadventure.cloud).',
         },
     },
     async run({ args }) {

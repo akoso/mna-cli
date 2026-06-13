@@ -5,7 +5,7 @@ import { renderJson } from '../../render/json'
 import { colors } from '../../render/colors'
 import { reportAndExit, requireApiKey } from '../../util/errors'
 
-const DEFAULT_WEB_BASE = 'https://mynextadventure.cloud'
+const DEFAULT_WEB_BASE = 'https://app.mynextadventure.cloud'
 
 function resolveWebBase(): string {
     return process.env.MNA_WEB_BASE_URL?.trim() || DEFAULT_WEB_BASE
