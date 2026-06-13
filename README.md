@@ -4,7 +4,8 @@
 
 `mna` is an open-source CLI for managing your trips on My Next Adventure.
 It also ships as a [Claude Code](https://claude.com/claude-code) skill so Claude
-can plan, view, and (in later phases) modify trips on your behalf.
+can plan, research, build, cost, and manage whole trips on your behalf — see
+[`skills/mna/SKILL.md`](./skills/mna/SKILL.md).
 
 Status: **pre-1.0, alpha.** Tagged releases publish binaries to GitHub
 Releases. npm and Homebrew distribution land with the first tag.
@@ -68,6 +69,21 @@ If you prefer headless / paste-token login:
 ```bash
 mna login --paste-token <key>      # generate the key from the user menu on mynextadventure.cloud
 ```
+
+## Use it as a Claude Code skill
+
+`mna` doubles as a [Claude Code](https://claude.com/claude-code) skill — install it and Claude
+can plan, research, cost, and manage whole trips for you. **One command:**
+
+```bash
+git clone --depth 1 https://github.com/akoso/mna-cli /tmp/mna-cli && mkdir -p ~/.claude/skills && cp -r /tmp/mna-cli/skills/mna ~/.claude/skills/
+```
+
+This drops the skill at `~/.claude/skills/mna/`. Start (or `/reload`) Claude Code and just ask
+it to plan a trip — the skill triggers on its own. (Already have the repo cloned? Just
+`cp -r skills/mna ~/.claude/skills/`.)
+
+The skill drives the `mna` CLI, so install the CLI (above) and run `mna login` first.
 
 ## Commands
 
@@ -180,9 +196,9 @@ Every command supports `--json` for piping into `jq` or Claude.
 
 ## Status
 
-All command groups (auth/keys/config, trips, variants, destinations, options, events, access, vote/votes, goals, collections) are wired and CI-tested. Pre-1.0 means the public API contract is still allowed to break under `/v1/`. Once `1.0.0` ships, `/v1/` becomes stable; breaking changes require `/v2/`.
+All command groups (auth/keys/config, trips, variants, destinations, options, events, access, vote/votes, goals, collections) are wired, CI-tested, and backed by live `/v1/` endpoints in production. Pre-1.0 means the public API contract is still allowed to break under `/v1/`. Once `1.0.0` ships, `/v1/` becomes stable; breaking changes require `/v2/`.
 
-The matching server-side public API endpoints land progressively in the `akoso/travel-plans` repo. If a command returns a 404 against production, the corresponding server PR likely hasn't deployed yet — try `mna whoami --verify` to confirm your base URL.
+The contract of record is `https://api.mynextadventure.cloud/v1/openapi.json`. If a write seems to "succeed" but a field doesn't stick, re-fetch with `mna trips show <id> --json` to confirm — and check the request body shape against the OpenAPI schema for that endpoint.
 
 ## Configuration
 
