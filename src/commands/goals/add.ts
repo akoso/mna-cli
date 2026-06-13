@@ -4,20 +4,7 @@ import { loadCredentials, resolveApiKey, resolveBaseUrl } from '../../auth/crede
 import { renderJson } from '../../render/json'
 import { colors } from '../../render/colors'
 import { reportAndExit, requireApiKey } from '../../util/errors'
-
-async function readJsonBody(path: string): Promise<Record<string, unknown>> {
-    const file = Bun.file(path)
-    if (!(await file.exists())) {
-        throw new Error(`JSON file not found: ${path}`)
-    }
-    const parsed = (await file.json()) as unknown
-    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
-        throw new Error(
-            `Expected JSON object in ${path}, got ${Array.isArray(parsed) ? 'array' : typeof parsed}.`,
-        )
-    }
-    return parsed as Record<string, unknown>
-}
+import { readJsonObject } from '../../util/json-file'
 
 export const goalsAddCommand = defineCommand({
     meta: { name: 'add', description: 'Create a new travel goal from a JSON file.' },
@@ -31,7 +18,7 @@ export const goalsAddCommand = defineCommand({
     },
     async run({ args }) {
         try {
-            const body = await readJsonBody(args['from-json'])
+            const body = await readJsonObject(args['from-json'])
 
             const creds = await loadCredentials()
             const apiKey = resolveApiKey(creds)
