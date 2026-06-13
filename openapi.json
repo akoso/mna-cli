@@ -239,7 +239,14 @@
         },
         "responses": {
           "201": {
-            "description": "Option created."
+            "description": "Option created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateOptionResultV1Dto"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -294,7 +301,14 @@
         },
         "responses": {
           "201": {
-            "description": "Option created."
+            "description": "Option created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateOptionResultV1Dto"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -349,7 +363,14 @@
         },
         "responses": {
           "201": {
-            "description": "Option created."
+            "description": "Option created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateOptionResultV1Dto"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -1030,6 +1051,27 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "description": "Fields to update. The shape depends on the :kind path segment.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateAccommodationOptionV1Dto"
+                  },
+                  {
+                    "$ref": "#/components/schemas/UpdateTransportOptionV1Dto"
+                  },
+                  {
+                    "$ref": "#/components/schemas/UpdateGettingAroundOptionV1Dto"
+                  }
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Option updated."
@@ -2952,6 +2994,10 @@
             "type": "string",
             "format": "date-time"
           },
+          "freeCancellationUntil": {
+            "type": "string",
+            "format": "date-time"
+          },
           "checkInTime": {
             "type": "string"
           },
@@ -3099,6 +3145,16 @@
           },
           "isReturnToHome": {
             "type": "boolean"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Arrival date at this destination."
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Departure date from this destination."
           },
           "accommodationOptions": {
             "type": "array",
@@ -3411,6 +3467,29 @@
           "location": {
             "$ref": "#/components/schemas/CreateOptionLocationV1Dto"
           },
+          "checkIn": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Check-in date."
+          },
+          "checkOut": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Check-out date."
+          },
+          "checkInTime": {
+            "type": "string",
+            "description": "Check-in time of day (e.g. \"15:00\")."
+          },
+          "checkOutTime": {
+            "type": "string",
+            "description": "Check-out time of day (e.g. \"11:00\")."
+          },
+          "freeCancellationUntil": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Free cancellation deadline."
+          },
           "roomDetails": {
             "$ref": "#/components/schemas/RoomDetailsV1Dto"
           },
@@ -3428,6 +3507,18 @@
           "currency",
           "location",
           "roomDetails"
+        ]
+      },
+      "CreateOptionResultV1Dto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Server-assigned key for the newly-created option."
+          }
+        },
+        "required": [
+          "key"
         ]
       },
       "CreateTransportOptionV1Dto": {
@@ -3788,6 +3879,16 @@
             "type": "boolean",
             "description": "Marks this destination as the return-to-home leg. Server keeps it pinned to the end."
           },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Arrival date at this destination."
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Departure date from this destination."
+          },
           "notes": {
             "type": "string",
             "description": "Free-form destination notes."
@@ -3819,6 +3920,16 @@
           "isReturnToHome": {
             "type": "boolean",
             "description": "Toggle return-to-home semantics."
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Arrival date at this destination. Pass null to clear."
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Departure date from this destination. Pass null to clear."
           },
           "notes": {
             "type": "string",
@@ -3856,6 +3967,164 @@
           "deleted",
           "destinationKey"
         ]
+      },
+      "UpdateAccommodationOptionV1Dto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the accommodation."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "hotel",
+              "hostel",
+              "apartment",
+              "house",
+              "camping",
+              "other"
+            ],
+            "description": "Type of accommodation."
+          },
+          "totalCost": {
+            "type": "number",
+            "description": "Total cost for the stay."
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency code (e.g. \"USD\")."
+          },
+          "location": {
+            "$ref": "#/components/schemas/CreateOptionLocationV1Dto"
+          },
+          "checkIn": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Check-in date."
+          },
+          "checkOut": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Check-out date."
+          },
+          "checkInTime": {
+            "type": "string",
+            "description": "Check-in time of day (e.g. \"15:00\")."
+          },
+          "checkOutTime": {
+            "type": "string",
+            "description": "Check-out time of day (e.g. \"11:00\")."
+          },
+          "freeCancellationUntil": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Free cancellation deadline. Pass null to clear."
+          },
+          "roomDetails": {
+            "$ref": "#/components/schemas/RoomDetailsV1Dto"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "sourceUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateTransportOptionV1Dto": {
+        "type": "object",
+        "properties": {
+          "totalCost": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "from": {
+            "$ref": "#/components/schemas/CreateOptionLocationV1Dto"
+          },
+          "to": {
+            "$ref": "#/components/schemas/CreateOptionLocationV1Dto"
+          },
+          "departAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "arriveAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "durationHours": {
+            "type": "number"
+          },
+          "durationMinutes": {
+            "type": "number"
+          },
+          "transportType": {
+            "type": "string",
+            "enum": [
+              "car",
+              "plane",
+              "train",
+              "bus",
+              "ship",
+              "motorbike",
+              "bike",
+              "other"
+            ]
+          },
+          "roundTrip": {
+            "type": "boolean"
+          },
+          "outboundIncludesReturnCost": {
+            "type": "boolean"
+          },
+          "roundTripReturn": {
+            "type": "boolean"
+          },
+          "returnTransportOptionKey": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "link": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateGettingAroundOptionV1Dto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "walk",
+              "publicTransport",
+              "rideShare",
+              "ownCar",
+              "rentalCar",
+              "ownMotor",
+              "rentalMotor",
+              "bike",
+              "rentalBike",
+              "other"
+            ]
+          },
+          "totalCost": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "link": {
+            "type": "string"
+          }
+        }
       },
       "DeleteOptionResultV1Dto": {
         "type": "object",

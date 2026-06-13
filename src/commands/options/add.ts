@@ -5,6 +5,7 @@ import { renderJson } from '../../render/json'
 import { colors } from '../../render/colors'
 import { reportAndExit, requireApiKey } from '../../util/errors'
 import { readJsonObject } from '../../util/json-file'
+import { applyFreeCancellation } from './free-cancellation'
 
 const KINDS = ['accommodation', 'transport', 'getting-around'] as const
 type Kind = (typeof KINDS)[number]
@@ -34,12 +35,18 @@ export const optionsAddCommand = defineCommand({
             required: true,
             description: 'Path to JSON file describing the option body.',
         },
+        'free-cancellation-until': {
+            type: 'string',
+            description:
+                'Accommodation only: free-cancellation deadline (YYYY-MM-DD or ISO date-time). Merged into the body.',
+        },
         json: { type: 'boolean', default: false, description: 'Output as JSON.' },
     },
     async run({ args }) {
         try {
             assertKind(args.kind)
             const body = await readJsonObject(args['from-json'])
+            applyFreeCancellation(body, args['free-cancellation-until'], args.kind)
 
             const creds = await loadCredentials()
             const apiKey = resolveApiKey(creds)
