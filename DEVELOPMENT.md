@@ -74,4 +74,4 @@ introduce tests that hit production unless they're explicitly opt-in (`MNA_E2E=1
 
 See [RELEASING.md](./RELEASING.md). Releases are driven by pushing a `vX.Y.Z`
 tag, which builds the native binaries, cuts a GitHub Release, and publishes
-`@mantacode/mna-cli` to npm.
+`mna-cli` to npm.

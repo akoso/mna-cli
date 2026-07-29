@@ -1,8 +1,8 @@
 # Template Homebrew formula for the mna CLI.
 #
 # This file is versioned alongside the source as a template. To make
-# `brew install mantacode/tap/mna` work, copy this file into the separate
-# `mantacode/homebrew-tap` GitHub repo at `Formula/mna.rb`, and update
+# `brew install akoso/tap/mna` work, copy this file into the separate
+# `akoso/homebrew-tap` GitHub repo at `Formula/mna.rb`, and update
 # `version` + each `sha256` after a new GitHub Release is published.
 # See RELEASING.md.
 

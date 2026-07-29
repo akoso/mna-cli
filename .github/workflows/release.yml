@@ -85,7 +85,7 @@ jobs:
       - name: Build npm bundle
         run: bun run build
 
-      # @mantacode/mna-cli is a scoped package, which npm treats as private by
+      # mna-cli is a scoped package, which npm treats as private by
       # default — --access public is required (belt-and-braces alongside
       # publishConfig.access in package.json), especially on the first publish.
       - name: Publish to npm
