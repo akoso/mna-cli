@@ -1,10 +1,10 @@
 # Template Homebrew formula for the mna CLI.
 #
 # This file is versioned alongside the source as a template. To make
-# `brew install mynextadventure/tap/mna` work, copy this file into the
-# separate `mynextadventure/homebrew-tap` (or `akoso/homebrew-tap`) GitHub
-# repo at `Formula/mna.rb`, and update `version` + each `sha256` after a
-# new GitHub Release is published. See RELEASING.md.
+# `brew install mantacode/tap/mna` work, copy this file into the separate
+# `mantacode/homebrew-tap` GitHub repo at `Formula/mna.rb`, and update
+# `version` + each `sha256` after a new GitHub Release is published.
+# See RELEASING.md.
 
 class Mna < Formula
   desc "Command-line tool for My Next Adventure trip planning"

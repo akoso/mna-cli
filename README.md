@@ -15,7 +15,7 @@ Releases. npm and Homebrew distribution land with the first tag.
 ### npm (Node 20+)
 
 ```bash
-npm install -g @mynextadventure/cli
+npm install -g @mantacode/mna-cli
 ```
 
 This installs the `mna` binary. It bundles all dependencies as a single
@@ -24,7 +24,7 @@ JS file; no Bun required.
 ### Homebrew (macOS + Linux)
 
 ```bash
-brew install mynextadventure/tap/mna
+brew install mantacode/tap/mna
 ```
 
 Installs a precompiled native binary. The tap is updated per release; see
@@ -47,7 +47,7 @@ mna --version
 ### From source (development)
 
 ```bash
-git clone https://github.com/mynextadventure/mna-cli
+git clone https://github.com/akoso/mna-cli
 cd mna-cli
 bun install
 bun run codegen
@@ -67,7 +67,7 @@ mna trips show <tripId>            # detail view
 If you prefer headless / paste-token login:
 
 ```bash
-mna login --paste-token <key>      # generate the key from the user menu on mynextadventure.cloud
+mna login --paste-token <key>      # generate the key from the user menu on app.mynextadventure.cloud
 ```
 
 ## Use it as a Claude Code skill
