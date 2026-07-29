@@ -1,11 +1,29 @@
 {
-    "name": "@mynextadventure/cli",
+    "name": "@mantacode/mna-cli",
     "version": "0.0.1",
     "description": "Command-line tool for My Next Adventure trip planning.",
     "license": "MIT",
     "type": "module",
+    "homepage": "https://github.com/akoso/mna-cli#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/akoso/mna-cli.git"
+    },
+    "bugs": {
+        "url": "https://github.com/akoso/mna-cli/issues"
+    },
+    "keywords": [
+        "cli",
+        "travel",
+        "trip-planning",
+        "my-next-adventure",
+        "claude-code-skill"
+    ],
     "bin": {
         "mna": "./dist/mna.js"
+    },
+    "publishConfig": {
+        "access": "public"
     },
     "files": [
         "dist/mna.js",

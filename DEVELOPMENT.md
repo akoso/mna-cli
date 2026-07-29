@@ -30,10 +30,16 @@ bun run codegen         # regen types from production OpenAPI
 
 Without `MNA_OPENAPI_URL` set, `bun run codegen` tries sources in order:
 
-1. `https://api.mynextadventure.cloud/v1/openapi.json` (the live public spec)
-2. `openapi.json` at the repo root (committed snapshot, refreshed periodically)
+1. `openapi.json` at the repo root (committed snapshot)
+2. `https://api.mynextadventure.cloud/v1/openapi.json` (the live public spec)
 
-The snapshot fallback exists so CI and fresh clones work even when the production endpoint is unreachable. Once the production deploy is reliably online, prefer the URL — the committed snapshot will be regenerated on a slower cadence to track major contract changes.
+The snapshot comes first so CI and fresh clones are deterministic and land green regardless of deploy timing; the URL is the fallback for a checkout where the snapshot is missing. To type-check against the current production surface instead, force it:
+
+```bash
+MNA_OPENAPI_URL=https://api.mynextadventure.cloud/v1/openapi.json bun run codegen
+```
+
+The snapshot is refreshed on a slower cadence than the server deploys, so it can lag production by additive (backwards-compatible) fields. Refresh it by running the command above and committing the resulting `openapi.json`.
 
 ## Codegen against a local server
 
@@ -66,5 +72,6 @@ introduce tests that hit production unless they're explicitly opt-in (`MNA_E2E=1
 
 ## Releasing
 
-Out of scope until Phase 8. See `docs/superpowers/specs/2026-05-21-mna-cli-design.md`
-in the `travel-plans` repo for the release plan.
+See [RELEASING.md](./RELEASING.md). Releases are driven by pushing a `vX.Y.Z`
+tag, which builds the native binaries, cuts a GitHub Release, and publishes
+`@mantacode/mna-cli` to npm.
