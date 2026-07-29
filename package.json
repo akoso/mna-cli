@@ -1,5 +1,5 @@
 {
-    "name": "@mantacode/mna-cli",
+    "name": "mna-cli",
     "version": "0.0.1",
     "description": "Command-line tool for My Next Adventure trip planning.",
     "license": "MIT",

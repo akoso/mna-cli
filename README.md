@@ -15,7 +15,7 @@ Releases. npm and Homebrew distribution land with the first tag.
 ### npm (Node 20+)
 
 ```bash
-npm install -g @mantacode/mna-cli
+npm install -g mna-cli
 ```
 
 This installs the `mna` binary. It bundles all dependencies as a single
@@ -24,7 +24,7 @@ JS file; no Bun required.
 ### Homebrew (macOS + Linux)
 
 ```bash
-brew install mantacode/tap/mna
+brew install akoso/tap/mna
 ```
 
 Installs a precompiled native binary. The tap is updated per release; see

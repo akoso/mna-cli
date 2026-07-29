@@ -4,9 +4,9 @@ The release pipeline is driven by tag pushes. Tagging a commit `vX.Y.Z` runs
 `.github/workflows/release.yml`, which builds three native binaries
 (`darwin-arm64`, `darwin-x64`, `linux-x64`), uploads them to a GitHub
 Release as `.tar.gz` + `.sha256`, and publishes the bundled npm package
-`@mantacode/mna-cli` to the public registry.
+`mna-cli` to the public registry.
 
-The npm package is `@mantacode/mna-cli`; the binary it installs is `mna`.
+The npm package is `mna-cli`; the binary it installs is `mna`.
 The `@mantacode` scope is shared across products, so the package name carries
 the product prefix while the command stays short.
 
@@ -29,7 +29,7 @@ the product prefix while the command stays short.
 4. Watch the **Release** workflow on GitHub Actions. When it completes:
    - A new GitHub Release `vX.Y.Z` exists with three `mna-<target>.tar.gz`
      assets and their `.sha256` files.
-   - npm has a new `@mantacode/mna-cli@X.Y.Z` version.
+   - npm has a new `mna-cli@X.Y.Z` version.
 
 5. Refresh the Homebrew tap (see below).
 
@@ -75,8 +75,8 @@ already carries `version "0.1.0"` as its placeholder.
    number is then burned (never reuse one).
 
 3. **Create the Homebrew tap repo.** Make a public GitHub repo named
-   `mantacode/homebrew-tap` — the `homebrew-` prefix is what lets Homebrew
-   resolve `brew install mantacode/tap/mna`. Inside it, create
+   `akoso/homebrew-tap` — the `homebrew-` prefix is what lets Homebrew
+   resolve `brew install akoso/tap/mna`. Inside it, create
    `Formula/mna.rb` from this repo's `homebrew/mna.rb` template with the
    SHAs filled in (see next section).
 
@@ -93,7 +93,7 @@ The tap is not automated yet. After every release:
    cat /tmp/mna-vX.Y.Z/mna-linux-x64.tar.gz.sha256
    ```
 
-2. In a checkout of `mantacode/homebrew-tap`, edit `Formula/mna.rb`:
+2. In a checkout of `akoso/homebrew-tap`, edit `Formula/mna.rb`:
    - Update `version "X.Y.Z"`.
    - Replace each `sha256 "..."` with the values from step 1.
 
@@ -107,7 +107,7 @@ The tap is not automated yet. After every release:
 4. Verify install works from a clean machine:
 
    ```bash
-   brew install mantacode/tap/mna
+   brew install akoso/tap/mna
    mna --version    # should print X.Y.Z
    ```
 
@@ -118,7 +118,7 @@ that opens a PR against the tap repo from `release.yml`.
 
 - **GitHub Release:** `gh release delete vX.Y.Z --yes` and delete the tag
   (`git tag -d vX.Y.Z && git push --delete origin vX.Y.Z`).
-- **npm:** `npm unpublish @mantacode/mna-cli@X.Y.Z` works only within
+- **npm:** `npm unpublish mna-cli@X.Y.Z` works only within
   72 hours of publish. After that, publish a new patch version with the
   fix. **Never** reuse a version number.
 - **Homebrew:** revert the formula commit in the tap repo.
