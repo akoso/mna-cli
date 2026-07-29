@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 import { defineCommand, runMain } from 'citty'
+import { version } from '../../package.json'
 import { configCommand } from '../commands/config'
 import { loginCommand } from '../commands/login'
 import { logoutCommand } from '../commands/logout'
@@ -186,7 +187,7 @@ const collections = defineCommand({
 const main = defineCommand({
     meta: {
         name: 'mna',
-        version: '0.0.1',
+        version,
         description: 'My Next Adventure CLI',
     },
     subCommands: {
