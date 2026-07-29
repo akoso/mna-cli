@@ -24,7 +24,7 @@ JS file; no Bun required.
 ### Homebrew (macOS + Linux)
 
 ```bash
-brew install akoso/tap/mna
+brew install mantacodedevs/tap/mna
 ```
 
 Installs a precompiled native binary. The tap is updated per release; see
@@ -38,7 +38,7 @@ Installs a precompiled native binary. The tap is updated per release; see
 #   mna-darwin-x64.tar.gz     (Intel Mac)
 #   mna-linux-x64.tar.gz      (Linux x86_64)
 curl -L -o mna.tar.gz \
-  https://github.com/akoso/mna-cli/releases/latest/download/mna-darwin-arm64.tar.gz
+  https://github.com/MantaCodeDevs/mna-cli/releases/latest/download/mna-darwin-arm64.tar.gz
 tar -xzf mna.tar.gz
 mv mna-darwin-arm64 /usr/local/bin/mna
 mna --version
@@ -47,7 +47,7 @@ mna --version
 ### From source (development)
 
 ```bash
-git clone https://github.com/akoso/mna-cli
+git clone https://github.com/MantaCodeDevs/mna-cli
 cd mna-cli
 bun install
 bun run codegen
@@ -81,7 +81,7 @@ mna login --paste-token <key>      # generate the key from the user menu on app.
 can plan, research, cost, and manage whole trips for you. **One command:**
 
 ```bash
-git clone --depth 1 https://github.com/akoso/mna-cli /tmp/mna-cli && mkdir -p ~/.claude/skills && cp -r /tmp/mna-cli/skills/mna ~/.claude/skills/
+git clone --depth 1 https://github.com/MantaCodeDevs/mna-cli /tmp/mna-cli && mkdir -p ~/.claude/skills && cp -r /tmp/mna-cli/skills/mna ~/.claude/skills/
 ```
 
 This drops the skill at `~/.claude/skills/mna/`. Start (or `/reload`) Claude Code and just ask

@@ -75,8 +75,8 @@ already carries `version "0.1.0"` as its placeholder.
    number is then burned (never reuse one).
 
 3. **Create the Homebrew tap repo.** Make a public GitHub repo named
-   `akoso/homebrew-tap` — the `homebrew-` prefix is what lets Homebrew
-   resolve `brew install akoso/tap/mna`. Inside it, create
+   `mantacodedevs/homebrew-tap` — the `homebrew-` prefix is what lets Homebrew
+   resolve `brew install mantacodedevs/tap/mna`. Inside it, create
    `Formula/mna.rb` from this repo's `homebrew/mna.rb` template with the
    SHAs filled in (see next section).
 
@@ -93,7 +93,7 @@ The tap is not automated yet. After every release:
    cat /tmp/mna-vX.Y.Z/mna-linux-x64.tar.gz.sha256
    ```
 
-2. In a checkout of `akoso/homebrew-tap`, edit `Formula/mna.rb`:
+2. In a checkout of `mantacodedevs/homebrew-tap`, edit `Formula/mna.rb`:
    - Update `version "X.Y.Z"`.
    - Replace each `sha256 "..."` with the values from step 1.
 
@@ -107,7 +107,7 @@ The tap is not automated yet. After every release:
 4. Verify install works from a clean machine:
 
    ```bash
-   brew install akoso/tap/mna
+   brew install mantacodedevs/tap/mna
    mna --version    # should print X.Y.Z
    ```
 
