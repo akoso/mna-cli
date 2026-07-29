@@ -15,7 +15,7 @@ Releases. npm and Homebrew distribution land with the first tag.
 ### npm (Node 20+)
 
 ```bash
-npm install -g mna-cli
+npm install -g @mantacodedevs/mna-cli
 ```
 
 This installs the `mna` binary. It bundles all dependencies as a single
