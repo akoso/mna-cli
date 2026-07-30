@@ -88,6 +88,15 @@ This drops the skill at `~/.claude/skills/mna/`. Start (or `/reload`) Claude Cod
 it to plan a trip — the skill triggers on its own. (Already have the repo cloned? Just
 `cp -r skills/mna ~/.claude/skills/`.)
 
+Installed via npm? The skill ships inside the package — no clone needed:
+
+```bash
+mkdir -p ~/.claude/skills && cp -r "$(npm root -g)/@mantacodedevs/mna-cli/skills/mna" ~/.claude/skills/
+```
+
+Other AI coding agents can use the same `skills/mna/SKILL.md` playbook — it's plain
+markdown driving the CLI.
+
 The skill drives the `mna` CLI, so install the CLI (above) and run `mna login` first.
 
 ## Commands
