@@ -5,7 +5,8 @@ import { join } from 'node:path'
 import { findClient } from './clients'
 import type { HostEnv } from './host-env'
 import { SKILL_FILES } from './payload'
-import { applyPlan, mcpState, planForClient, planForClients, skillState } from './plan'
+import { applyPlan, mcpState, planForClient, planForClients, skillState, toApplyError } from './plan'
+import { ApplyFailedError } from './changes'
 
 let fakeHome: string
 
@@ -190,5 +191,36 @@ describe('path verification is surfaced, not hidden', () => {
         })
         expect(onLinux.mcpPathVerified).toBe(false)
         expect(onMac.mcpPathVerified).toBe(true)
+    })
+})
+
+describe('failure reporting', () => {
+    test('a failed write after a backup reports where the original went', () => {
+        // What the install command renders as "your original is at <path>".
+        // Unreachable through the filesystem once an atomic rename is in play
+        // (a writable directory makes the rename succeed), so it is proved here
+        // with the error a full disk would produce.
+        const err = new ApplyFailedError(
+            '/home/u/.claude.json',
+            new Error('ENOSPC: no space left on device'),
+            '/home/u/.claude.json.mna-backup-20260731T070037105',
+        )
+        expect(toApplyError('/home/u/.claude.json', err)).toEqual({
+            path: '/home/u/.claude.json',
+            message: 'ENOSPC: no space left on device',
+            backup: '/home/u/.claude.json.mna-backup-20260731T070037105',
+        })
+    })
+
+    test('an ordinary error reports no backup', () => {
+        expect(toApplyError('/p', new Error('EACCES: permission denied'))).toEqual({
+            path: '/p',
+            message: 'EACCES: permission denied',
+            backup: undefined,
+        })
+    })
+
+    test('a non-Error throw is still reportable', () => {
+        expect(toApplyError('/p', 'kaboom').message).toBe('kaboom')
     })
 })

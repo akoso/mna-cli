@@ -41,6 +41,13 @@ export interface ClientDefinition {
     /** Extra note surfaced in `skills list` / install output. */
     note?: string
     /**
+     * The vendor page documenting this client's user-level skill directory.
+     * Required for any client with a `userSkillsDir` (enforced by a test):
+     * we do not ship a discovery path we cannot cite. Surfaced in `--json`
+     * so users can check the claim themselves.
+     */
+    skillPathDocs?: string
+    /**
      * False when the skill directory follows the cross-agent convention but is
      * NOT documented by the vendor — i.e. we believe the client reads it, but
      * cannot prove it. Surfaced to the user rather than hidden.
@@ -85,6 +92,7 @@ function vscodeUserDir(env: HostEnv): string {
 export const CLIENTS: ClientDefinition[] = [
     {
         id: 'claude-code',
+        skillPathDocs: 'https://code.claude.com/docs/en/skills',
         label: 'Claude Code',
         detectDir: '.claude',
         userSkillsDir: '.claude/skills',
@@ -97,6 +105,7 @@ export const CLIENTS: ClientDefinition[] = [
     },
     {
         id: 'cursor',
+        skillPathDocs: 'https://cursor.com/docs/skills',
         label: 'Cursor',
         detectDir: '.cursor',
         userSkillsDir: '.cursor/skills',
@@ -126,6 +135,7 @@ export const CLIENTS: ClientDefinition[] = [
     },
     {
         id: 'windsurf',
+        skillPathDocs: 'https://docs.devin.ai/desktop/cascade/skills',
         label: 'Windsurf / Devin Desktop',
         detectDir: '.codeium/windsurf',
         userSkillsDir: '.codeium/windsurf/skills',
@@ -151,18 +161,21 @@ export const CLIENTS: ClientDefinition[] = [
     },
     {
         id: 'opencode',
+        skillPathDocs: 'https://opencode.ai/docs/skills/',
         label: 'OpenCode',
         detectDir: '.config/opencode',
         userSkillsDir: '.config/opencode/skills',
         projectSkillsDir: '.opencode/skills',
     },
     {
-        // The cross-agent directory. Vendor-documented as a read location by
-        // Codex CLI (where it is the *only* documented user-level path),
-        // Gemini CLI, Cursor, OpenCode, and Windsurf. Note the Agent Skills
-        // spec itself defines skill *contents*, not discovery paths — this is
-        // a widely-adopted convention rather than a normative requirement.
+        // Each of these vendors documents ~/.agents/skills as a user-level read
+        // location in its own docs: Codex CLI (where it is the ONLY documented
+        // user path), Gemini CLI, Cursor, OpenCode and Windsurf. What is *not*
+        // standardised is discovery itself — the Agent Skills spec defines skill
+        // contents, not where clients look — so this is six vendor decisions
+        // that happen to agree, not a spec guarantee. Claude Code does not read it.
         id: 'agents',
+        skillPathDocs: 'https://learn.chatgpt.com/docs/build-skills',
         aliases: ['codex'],
         label: 'Universal agent skills (~/.agents)',
         detectDir: '.agents',
@@ -172,6 +185,7 @@ export const CLIENTS: ClientDefinition[] = [
     },
     {
         id: 'gemini-cli',
+        skillPathDocs: 'https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/skills.md',
         label: 'Gemini CLI',
         detectDir: '.gemini',
         userSkillsDir: '.gemini/skills',

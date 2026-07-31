@@ -1,6 +1,7 @@
 import { join } from 'node:path'
 import {
     applyChange,
+    ApplyFailedError,
     ConfigConflictError,
     planFileChange,
     planJsonChange,
@@ -46,6 +47,8 @@ export interface ClientPlan {
     note?: string
     /** False when the skill directory is a community convention, not vendor-documented. */
     skillPathVerified: boolean
+    /** Vendor page documenting the skill directory. */
+    skillPathDocs?: string
     /** False when the MCP config path is not vendor-documented on this platform. */
     mcpPathVerified: boolean
 }
@@ -98,6 +101,7 @@ export async function planForClient(client: ClientDefinition, options: PlanOptio
         changes: [],
         note: client.note,
         skillPathVerified: client.skillPathVerified ?? true,
+        skillPathDocs: client.skillPathDocs,
         mcpPathVerified: !client.mcpPathUnverifiedOn?.includes(env.platform),
     }
 
@@ -159,6 +163,20 @@ export interface AppliedClient {
 }
 
 /**
+ * Maps a thrown value onto a reportable failure. Pulled out so the
+ * backup-path branch — which the install command renders as "your original is
+ * at <path>", and which is effectively unreachable through the filesystem once
+ * an atomic rename is in play — is directly testable.
+ */
+export function toApplyError(path: string, err: unknown): ApplyError {
+    return {
+        path,
+        message: err instanceof Error ? err.message : String(err),
+        backup: err instanceof ApplyFailedError ? err.backup : undefined,
+    }
+}
+
+/**
  * Executes a plan. `dryRun` short-circuits before any filesystem write. A
  * failure on one change is recorded and the rest still run, so a single
  * unwritable path cannot silently abandon the other files.
@@ -173,7 +191,7 @@ export async function applyPlan(plan: ClientPlan, dryRun: boolean): Promise<Appl
         try {
             applied.push(await applyChange(change))
         } catch (err) {
-            errors.push({ path: change.path, message: err instanceof Error ? err.message : String(err) })
+            errors.push(toApplyError(change.path, err))
         }
     }
     return { id: plan.id, label: plan.label, applied, errors }

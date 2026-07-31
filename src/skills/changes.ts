@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs'
 import { randomBytes } from 'node:crypto'
 import { chmod, copyFile, mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { basename, dirname, join } from 'node:path'
@@ -40,8 +41,25 @@ export type PlannedChange = FileChange | JsonChange
 
 export interface AppliedChange {
     path: string
+    /** Mirrors PlannedChange.label ("skill" | "mcp") so callers can report accurately. */
+    label: string
     result: 'created' | 'updated' | 'unchanged'
     backup?: string
+}
+
+/**
+ * A write that failed *after* we had already taken a backup. Carries the
+ * backup path so the user is told where their original went.
+ */
+export class ApplyFailedError extends Error {
+    constructor(
+        readonly path: string,
+        override readonly cause: unknown,
+        readonly backup?: string,
+    ) {
+        super(cause instanceof Error ? cause.message : String(cause))
+        this.name = 'ApplyFailedError'
+    }
 }
 
 /** The config exists but we cannot parse it — refuse rather than replace it. */
@@ -168,8 +186,11 @@ function sameJson(a: unknown, b: unknown): boolean {
 export async function writeFileAtomic(path: string, content: string, mode?: number): Promise<void> {
     const tmp = join(dirname(path), `.${basename(path)}.mna-tmp-${process.pid}-${randomBytes(4).toString('hex')}`)
     try {
-        await writeFile(tmp, content, 'utf8')
         const targetMode = mode ?? (await currentMode(path))
+        // Create with the final mode rather than chmod-ing afterwards: for a
+        // file holding an API key, chmod-after leaves a brief window in which
+        // the secret is world-readable.
+        await writeFile(tmp, content, targetMode === undefined ? 'utf8' : { encoding: 'utf8', mode: targetMode })
         if (targetMode !== undefined) await chmod(tmp, targetMode)
         await rename(tmp, path)
     } catch (err) {
@@ -213,7 +234,9 @@ export async function planJsonChange(
 }
 
 function backupSuffix(now = new Date()): string {
-    return now.toISOString().replace(/[-:]/g, '').replace(/\..+$/, '')
+    // Millisecond precision: a single run can back up the same file twice, and
+    // second-granularity names collided (and so overwrote each other).
+    return now.toISOString().replace(/[-:.]/g, '').replace(/Z$/, '')
 }
 
 /** How many timestamped backups of a given file we keep around. */
@@ -238,7 +261,14 @@ async function pruneBackups(path: string, keep = BACKUP_RETENTION): Promise<void
  * few are kept.
  */
 export async function backupFile(path: string, now?: Date): Promise<string> {
-    const target = `${path}.mna-backup-${backupSuffix(now)}`
+    const base = `${path}.mna-backup-${backupSuffix(now)}`
+    // Timestamps alone are not unique: a single run can back the same file up
+    // twice within a millisecond, and a colliding name would silently overwrite
+    // the earlier backup — losing exactly the thing we are trying to preserve.
+    let target = base
+    for (let n = 2; existsSync(target); n++) {
+        target = `${base}-${n}`
+    }
     await copyFile(path, target)
     await chmod(target, 0o600)
     await pruneBackups(path)
@@ -251,15 +281,24 @@ export async function backupFile(path: string, now?: Date): Promise<string> {
  */
 export async function applyChange(change: PlannedChange): Promise<AppliedChange> {
     if (change.status === 'unchanged') {
-        return { path: change.path, result: 'unchanged' }
+        return { path: change.path, label: change.label, result: 'unchanged' }
     }
 
     await mkdir(dirname(change.path), { recursive: true })
 
     if (change.kind === 'file') {
         const backup = change.status === 'overwrite' ? await backupFile(change.path) : undefined
-        await writeFileAtomic(change.path, change.content)
-        return { path: change.path, result: change.status === 'create' ? 'created' : 'updated', backup }
+        try {
+            await writeFileAtomic(change.path, change.content)
+        } catch (err) {
+            throw new ApplyFailedError(change.path, err, backup)
+        }
+        return {
+            path: change.path,
+            label: change.label,
+            result: change.status === 'create' ? 'created' : 'updated',
+            backup,
+        }
     }
 
     const { text, data } = await readConfigDoc(change.path)
@@ -278,8 +317,12 @@ export async function applyChange(change: PlannedChange): Promise<AppliedChange>
                   }),
               )
 
-    await writeFileAtomic(change.path, next, change.secret ? 0o600 : undefined)
-    return { path: change.path, result: text === null ? 'created' : 'updated', backup }
+    try {
+        await writeFileAtomic(change.path, next, change.secret ? 0o600 : undefined)
+    } catch (err) {
+        throw new ApplyFailedError(change.path, err, backup)
+    }
+    return { path: change.path, label: change.label, result: text === null ? 'created' : 'updated', backup }
 }
 
 function buildNested(keyPath: string[], value: unknown): Record<string, unknown> {

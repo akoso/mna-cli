@@ -42,5 +42,30 @@ jobs:
         run: |
           bun run build
           node dist/mna.js --version
+
+          # Seed a throwaway HOME with a JSONC config so the install actually
+          # reaches jsonc-parser's parse/modify/applyEdits. On a pristine HOME
+          # nothing is detected, no config is read, and a lazy require inside
+          # those functions would still ship — which is the exact class of bug
+          # this step exists to catch.
+          SMOKE_HOME="$(mktemp -d)"
+          export HOME="$SMOKE_HOME" XDG_CONFIG_HOME="$SMOKE_HOME/.config"
+          mkdir -p "$SMOKE_HOME/.cursor"
+          printf '%s\n' \
+            '{' \
+            '  // a comment jsonc-parser must preserve' \
+            '  "mcpServers": {' \
+            '    "existing": { "url": "https://example.invalid/mcp" },' \
+            '  }' \
+            '}' > "$SMOKE_HOME/.cursor/mcp.json"
+
           node dist/mna.js skills list --all --json > /dev/null
-          node dist/mna.js skills install --dry-run --json > /dev/null
+          node dist/mna.js skills install --client cursor --yes
+
+          echo "--- resulting config ---"
+          cat "$SMOKE_HOME/.cursor/mcp.json"
+          grep -q 'a comment jsonc-parser must preserve' "$SMOKE_HOME/.cursor/mcp.json"
+          grep -q 'my-next-adventure' "$SMOKE_HOME/.cursor/mcp.json"
+          grep -q 'existing' "$SMOKE_HOME/.cursor/mcp.json"
+          test -f "$SMOKE_HOME/.cursor/skills/mna/SKILL.md"
+          echo "bundle smoke test OK"

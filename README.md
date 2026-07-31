@@ -121,24 +121,27 @@ Installs are designed to be boring and reversible:
 
 ### Supported clients
 
-Every path below is taken from that vendor's own documentation, not from convention.
+Every skill directory below is the one that vendor documents — sources linked, and `mna skills
+list --json` reports the same URL per client so you can check without taking our word for it.
 
 | Client | `--client` | Skill | MCP server config |
 |---|---|---|---|
-| Claude Code | `claude-code` | `~/.claude/skills/mna/` | `~/.claude.json` → `mcpServers` |
-| Cursor | `cursor` | `~/.cursor/skills/mna/` | `~/.cursor/mcp.json` → `mcpServers` |
+| Claude Code | `claude-code` | [`~/.claude/skills/mna/`](https://code.claude.com/docs/en/skills) | `~/.claude.json` → `mcpServers` |
+| Cursor | `cursor` | [`~/.cursor/skills/mna/`](https://cursor.com/docs/skills) | `~/.cursor/mcp.json` → `mcpServers` |
 | Claude Desktop | `claude-desktop` | — | `claude_desktop_config.json` (per-OS) → `mcpServers` |
-| Windsurf / Devin Desktop | `windsurf` | `~/.codeium/windsurf/skills/mna/` | `~/.codeium/windsurf/mcp_config.json` |
+| Windsurf / Devin Desktop | `windsurf` | [`~/.codeium/windsurf/skills/mna/`](https://docs.devin.ai/desktop/cascade/skills) | `~/.codeium/windsurf/mcp_config.json` |
 | VS Code (Copilot agent mode) | `vscode` | — | `<VS Code user dir>/mcp.json` → `servers` |
-| Shared agent directory | `agents`, `codex` | `~/.agents/skills/mna/` | — |
-| OpenCode | `opencode` | `~/.config/opencode/skills/mna/` | — |
-| Gemini CLI | `gemini-cli` | `~/.gemini/skills/mna/` | `~/.gemini/settings.json` → `mcpServers` |
+| Shared agent directory | `agents`, `codex` | [`~/.agents/skills/mna/`](https://learn.chatgpt.com/docs/build-skills) | — |
+| OpenCode | `opencode` | [`~/.config/opencode/skills/mna/`](https://opencode.ai/docs/skills/) | — |
+| Gemini CLI | `gemini-cli` | [`~/.gemini/skills/mna/`](https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/skills.md) | `~/.gemini/settings.json` → `mcpServers` |
 
 `~/.agents/skills/` is documented as a read location by Codex CLI, Gemini CLI, Cursor, OpenCode
-and Windsurf, so one copy there serves several agents. **Codex CLI reads only that path** —
-`~/.codex/skills/` is a third-party compatibility claim that OpenAI's own docs do not make, so
-`--client codex` installs to `~/.agents/skills/`. Codex keeps MCP servers in TOML, which `mna`
-does not edit.
+and Windsurf, so one copy there serves several agents. Worth being precise about what that is:
+five vendors independently documenting the same path, **not** a spec guarantee — the Agent Skills
+standard defines what a skill contains, not where clients look for one. Claude Code does not read
+it. **Codex CLI reads only that path** — `~/.codex/skills/` is a third-party compatibility claim
+that OpenAI's own docs do not make, so `--client codex` installs to `~/.agents/skills/`. Codex
+keeps MCP servers in TOML, which `mna` does not edit.
 
 Two caveats the CLI also prints, marked `(?)` in the plan:
 

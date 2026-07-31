@@ -183,3 +183,25 @@ describe('vendor-verification flags', () => {
         expect(findClient('not-a-client')).toBeUndefined()
     })
 })
+
+describe('every documented path cites its source', () => {
+    // The guard behind the README's claim that every path comes from the
+    // vendor's own docs. A new client cannot be added without a citation.
+    test('each client with a skill directory links the vendor page', () => {
+        for (const client of CLIENTS) {
+            if (!client.userSkillsDir) continue
+            expect({ id: client.id, cited: Boolean(client.skillPathDocs) }).toEqual({
+                id: client.id,
+                cited: true,
+            })
+            expect(client.skillPathDocs).toMatch(/^https:\/\//)
+        }
+    })
+
+    test('clients without skill support do not claim a skills citation', () => {
+        for (const client of CLIENTS) {
+            if (client.userSkillsDir) continue
+            expect(client.skillPathDocs).toBeUndefined()
+        }
+    })
+})

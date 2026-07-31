@@ -2,9 +2,10 @@ import { describe, expect, test, beforeEach, afterEach } from 'bun:test'
 import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { chmod, stat } from 'node:fs/promises'
+import { chmod, mkdir, stat } from 'node:fs/promises'
 import {
     applyChange,
+    ApplyFailedError,
     BACKUP_RETENTION,
     backupFile,
     ConfigConflictError,
@@ -297,5 +298,39 @@ describe('credential handling', () => {
         expect(backups).toHaveLength(BACKUP_RETENTION)
         // The survivors are the newest ones.
         expect(backups.sort().at(-1)).toContain('20260101T000005')
+    })
+})
+
+describe('applied changes are attributable', () => {
+    test('carries the label through so callers can tell skill from mcp writes', async () => {
+        const fileResult = await applyChange(await planFileChange(join(dir, 'S.md'), 'x', 'skill'))
+        expect(fileResult.label).toBe('skill')
+        const jsonResult = await applyChange(
+            await planJsonChange(join(dir, 'c.json'), ['mcpServers', 'mna'], {}, 'mcp'),
+        )
+        expect(jsonResult.label).toBe('mcp')
+    })
+
+    test('unchanged results keep their label too', async () => {
+        const path = join(dir, 'S.md')
+        await writeFile(path, 'same')
+        expect((await applyChange(await planFileChange(path, 'same', 'skill'))).label).toBe('skill')
+    })
+
+    test('ApplyFailedError carries the backup path for the caller to surface', () => {
+        const err = new ApplyFailedError('/tmp/c.json', new Error('ENOSPC'), '/tmp/c.json.mna-backup-1')
+        expect(err.backup).toBe('/tmp/c.json.mna-backup-1')
+        expect(err.message).toBe('ENOSPC')
+    })
+
+    test('two backups of the same file never overwrite each other', async () => {
+        const path = join(dir, 'config.json')
+        await writeFile(path, '{"v":1}')
+        const first = await backupFile(path)
+        await writeFile(path, '{"v":2}')
+        const second = await backupFile(path)
+        expect(first).not.toBe(second)
+        expect(JSON.parse(await readFile(first, 'utf8'))).toEqual({ v: 1 })
+        expect(JSON.parse(await readFile(second, 'utf8'))).toEqual({ v: 2 })
     })
 })

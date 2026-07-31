@@ -6,6 +6,7 @@ import { colors } from '../../render/colors'
 import { CLIENTS } from '../../skills/clients'
 import { hostEnv } from '../../skills/host-env'
 import { mcpState, planForClients, skillState } from '../../skills/plan'
+import { clientJsonView } from '../../skills/json-view'
 import { tildify } from '../../skills/render-plan'
 import { reportAndExit } from '../../util/errors'
 
@@ -47,23 +48,7 @@ export const skillsListCommand = defineCommand({
                 renderJson({
                     scope: args.scope,
                     authenticated: Boolean(apiKey),
-                    clients: plans.map((plan) => ({
-                        id: plan.id,
-                        label: plan.label,
-                        installed: plan.installed,
-                        detectedAt: plan.detectedAt,
-                        skill: {
-                            path: plan.skillPath,
-                            state: skillState(plan),
-                            pathVerified: plan.skillPathVerified,
-                        },
-                        mcp: {
-                            path: plan.mcpPath,
-                            state: mcpState(plan),
-                            pathVerified: plan.mcpPathVerified,
-                        },
-                        mcpBlocked: plan.mcpBlocked ?? null,
-                    })),
+                    clients: plans.map(clientJsonView),
                 })
                 return
             }

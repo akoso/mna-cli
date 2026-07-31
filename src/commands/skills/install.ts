@@ -15,6 +15,7 @@ import {
     type ClientPlan,
 } from '../../skills/plan'
 import { pendingCount, renderPlans, tildify } from '../../skills/render-plan'
+import { clientJsonView } from '../../skills/json-view'
 import { reportAndExit } from '../../util/errors'
 import { isInteractive } from '../../util/tty'
 
@@ -44,16 +45,7 @@ function jsonView(plans: ClientPlan[], scope: Scope, dryRun: boolean) {
         dryRun,
         mcpServer: { name: MCP_SERVER_NAME, url: MCP_SERVER_URL },
         clients: plans.map((plan) => ({
-            id: plan.id,
-            label: plan.label,
-            installed: plan.installed,
-            skill: {
-                path: plan.skillPath,
-                state: skillState(plan),
-                pathVerified: plan.skillPathVerified,
-            },
-            mcp: { path: plan.mcpPath, state: mcpState(plan) },
-            mcpBlocked: plan.mcpBlocked ?? null,
+            ...clientJsonView(plan),
             changes: plan.changes.map((c) => ({
                 kind: c.kind,
                 path: c.path,
@@ -225,8 +217,15 @@ export const skillsInstallCommand = defineCommand({
 
             const wrote = applied.flatMap((c) => c.applied.filter((a) => a.result !== 'unchanged'))
             const failures = applied.flatMap((c) => c.errors.map((e) => ({ client: c.label, ...e })))
-            const succeeded = applied.filter((c) => c.applied.some((a) => a.result !== 'unchanged'))
             const blocked = plans.filter((p) => p.mcpBlocked)
+
+            // Report per artefact, not per client. A client whose skill files
+            // all failed but whose MCP entry landed has NOT had "the skill
+            // installed", and saying so would be a false success claim.
+            const didWrite = (c: AppliedClient, label: string) =>
+                c.applied.some((a) => a.label === label && a.result !== 'unchanged')
+            const skillClients = applied.filter((c) => didWrite(c, 'skill'))
+            const mcpOnlyClients = applied.filter((c) => didWrite(c, 'mcp') && !didWrite(c, 'skill'))
 
             if (asJson) {
                 renderJson({
@@ -275,9 +274,17 @@ export const skillsInstallCommand = defineCommand({
                 process.exit(2)
             }
 
-            process.stdout.write(
-                `\n${colors.green('✓')} Installed the ${SKILL_NAME} skill for ${succeeded.map((c) => c.label).join(', ')}.\n`,
-            )
+            process.stdout.write('\n')
+            if (skillClients.length > 0) {
+                process.stdout.write(
+                    `${colors.green('✓')} Installed the ${SKILL_NAME} skill for ${skillClients.map((c) => c.label).join(', ')}.\n`,
+                )
+            }
+            if (mcpOnlyClients.length > 0) {
+                process.stdout.write(
+                    `${colors.green('✓')} Registered the MNA MCP server for ${mcpOnlyClients.map((c) => c.label).join(', ')}.\n`,
+                )
+            }
             process.stdout.write(colors.dim('  Restart the client (or reload skills) and ask it to plan a trip.\n'))
 
             if (failures.length > 0) process.exit(2)
