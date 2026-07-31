@@ -2,12 +2,17 @@ import { describe, expect, test, beforeEach, afterEach } from 'bun:test'
 import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { chmod, stat } from 'node:fs/promises'
 import {
     applyChange,
+    BACKUP_RETENTION,
+    backupFile,
+    ConfigConflictError,
     planFileChange,
     planJsonChange,
     readMergeableJson,
     UnparseableConfigError,
+    writeFileAtomic,
 } from './changes'
 
 let dir: string
@@ -144,5 +149,153 @@ describe('applyChange', () => {
         const applied = await applyChange(await planJsonChange(path, ['mcpServers', 'mna'], { url: 'u' }, 'mcp'))
         expect(applied.result).toBe('created')
         expect(JSON.parse(await readFile(path, 'utf8'))).toEqual({ mcpServers: { mna: { url: 'u' } } })
+    })
+})
+
+describe('JSONC configs', () => {
+    // VS Code's mcp.json and Gemini CLI's settings.json are JSONC by
+    // convention. Treating a commented config as corrupt would send the user
+    // down a dead end, and rewriting it with JSON.stringify would silently eat
+    // their comments.
+    const jsonc = `{
+  // servers I actually use
+  "servers": {
+    "local": { "command": "npx" }, // trailing comma next
+  },
+  /* block comment */
+  "other": true
+}
+`
+
+    test('parses comments and trailing commas instead of refusing', async () => {
+        const path = join(dir, 'mcp.json')
+        await writeFile(path, jsonc)
+        expect(await readMergeableJson(path)).toEqual({
+            servers: { local: { command: 'npx' } },
+            other: true,
+        })
+    })
+
+    test('merging preserves comments, key order, and untouched formatting', async () => {
+        const path = join(dir, 'mcp.json')
+        await writeFile(path, jsonc)
+        await applyChange(await planJsonChange(path, ['servers', 'mna'], { type: 'http' }, 'mcp'))
+        const after = await readFile(path, 'utf8')
+        expect(after).toContain('// servers I actually use')
+        expect(after).toContain('/* block comment */')
+        expect(after).toContain('"local"')
+        expect(after).toContain('"mna"')
+        expect(JSON.parse(JSON.stringify(await readMergeableJson(path)))).toMatchObject({
+            servers: { local: { command: 'npx' }, mna: { type: 'http' } },
+            other: true,
+        })
+    })
+
+    test('re-planning after a JSONC merge reports unchanged (idempotent)', async () => {
+        const path = join(dir, 'mcp.json')
+        await writeFile(path, jsonc)
+        const value = { type: 'http' }
+        await applyChange(await planJsonChange(path, ['servers', 'mna'], value, 'mcp'))
+        expect((await planJsonChange(path, ['servers', 'mna'], value, 'mcp')).status).toBe('unchanged')
+    })
+})
+
+describe('non-object intermediates', () => {
+    test('planJsonChange refuses when the container key holds a string', async () => {
+        const path = join(dir, 'config.json')
+        await writeFile(path, JSON.stringify({ mcpServers: 'nope' }))
+        await expect(planJsonChange(path, ['mcpServers', 'mna'], {}, 'mcp')).rejects.toBeInstanceOf(
+            ConfigConflictError,
+        )
+    })
+
+    test('planJsonChange refuses when the container key holds an array', async () => {
+        const path = join(dir, 'config.json')
+        await writeFile(path, JSON.stringify({ mcpServers: [] }))
+        await expect(planJsonChange(path, ['mcpServers', 'mna'], {}, 'mcp')).rejects.toBeInstanceOf(
+            ConfigConflictError,
+        )
+    })
+
+    test('planJsonChange refuses when the container key holds null', async () => {
+        const path = join(dir, 'config.json')
+        await writeFile(path, JSON.stringify({ mcpServers: null }))
+        await expect(planJsonChange(path, ['mcpServers', 'mna'], {}, 'mcp')).rejects.toBeInstanceOf(
+            ConfigConflictError,
+        )
+    })
+
+    test('an absent container is fine — that is a create, not a conflict', async () => {
+        const path = join(dir, 'config.json')
+        await writeFile(path, JSON.stringify({ unrelated: 1 }))
+        expect((await planJsonChange(path, ['mcpServers', 'mna'], {}, 'mcp')).status).toBe('create')
+    })
+})
+
+describe('atomic writes', () => {
+    test('a failed write leaves the original intact and cleans up the temp file', async () => {
+        const path = join(dir, 'config.json')
+        await writeFile(path, '{"original": true}')
+        // A circular value makes JSON.stringify throw *after* we have started,
+        // standing in for ENOSPC / an interrupt mid-write.
+        await expect(writeFileAtomic(join(dir, 'nonexistent-dir', 'x.json'), 'data')).rejects.toThrow()
+        expect(await readFile(path, 'utf8')).toBe('{"original": true}')
+        expect((await readdir(dir)).filter((f) => f.includes('mna-tmp'))).toEqual([])
+    })
+
+    test('leaves no temp files behind on success', async () => {
+        const path = join(dir, 'config.json')
+        await writeFileAtomic(path, 'hello')
+        expect(await readFile(path, 'utf8')).toBe('hello')
+        expect((await readdir(dir)).filter((f) => f.includes('mna-tmp'))).toEqual([])
+    })
+
+    test('preserves the existing file mode when not forcing one', async () => {
+        const path = join(dir, 'config.json')
+        await writeFile(path, 'a')
+        await chmod(path, 0o640)
+        await writeFileAtomic(path, 'b')
+        expect((await stat(path)).mode & 0o777).toBe(0o640)
+    })
+})
+
+describe('credential handling', () => {
+    test('a config carrying an API key ends up owner-only (0600)', async () => {
+        const path = join(dir, 'config.json')
+        const change = await planJsonChange(
+            path,
+            ['mcpServers', 'mna'],
+            { url: 'u', headers: { 'X-API-Key': 'secret' } },
+            'mcp',
+            true,
+        )
+        await applyChange(change)
+        expect((await stat(path)).mode & 0o777).toBe(0o600)
+    })
+
+    test('a config without a key keeps default permissions', async () => {
+        const path = join(dir, 'config.json')
+        await applyChange(await planJsonChange(path, ['mcpServers', 'mna'], { url: 'u' }, 'mcp', false))
+        expect((await stat(path)).mode & 0o777).not.toBe(0o600)
+    })
+
+    test('backups are owner-only even when the original was world-readable', async () => {
+        const path = join(dir, 'config.json')
+        await writeFile(path, '{"oauth":"token"}')
+        await chmod(path, 0o644)
+        const backup = await backupFile(path)
+        expect((await stat(backup)).mode & 0o777).toBe(0o600)
+    })
+
+    test('only the most recent backups are kept', async () => {
+        const path = join(dir, 'config.json')
+        await writeFile(path, '{}')
+        for (let i = 0; i < BACKUP_RETENTION + 3; i++) {
+            await backupFile(path, new Date(Date.UTC(2026, 0, 1, 0, 0, i)))
+        }
+        const backups = (await readdir(dir)).filter((f) => f.includes('.mna-backup-'))
+        expect(backups).toHaveLength(BACKUP_RETENTION)
+        // The survivors are the newest ones.
+        expect(backups.sort().at(-1)).toContain('20260101T000005')
     })
 })

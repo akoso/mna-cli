@@ -152,3 +152,34 @@ describe('buildMcpEntry', () => {
         })
     })
 })
+
+describe('vendor-verification flags', () => {
+    test('every registered skill directory is vendor-documented', () => {
+        // If a future client is added on convention alone, mark it
+        // skillPathVerified: false so the CLI can say so out loud.
+        for (const client of CLIENTS) {
+            if (!client.userSkillsDir) continue
+            expect({ id: client.id, verified: client.skillPathVerified ?? true }).toEqual({
+                id: client.id,
+                verified: true,
+            })
+        }
+    })
+
+    test('Claude Desktop on Linux is flagged: the config path is not vendor-documented', () => {
+        const desktop = findClient('claude-desktop')!
+        expect(desktop.mcpPathUnverifiedOn).toEqual(['linux'])
+    })
+
+    test('Codex resolves to ~/.agents/skills, the only path OpenAI documents', () => {
+        // ~/.codex/skills is a third-party compatibility claim, not an OpenAI one.
+        const codex = findClient('codex')!
+        expect(codex.id).toBe('agents')
+        expect(skillDir(codex, env(), 'user')).toBe(join(fakeHome, '.agents', 'skills', 'mna'))
+        expect(CLIENTS.some((c) => c.userSkillsDir === '.codex/skills')).toBe(false)
+    })
+
+    test('unknown client names still resolve to undefined', () => {
+        expect(findClient('not-a-client')).toBeUndefined()
+    })
+})

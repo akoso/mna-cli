@@ -41,15 +41,38 @@ describe('planForClient', () => {
         expect(mcpState(plan)).toBe('n/a')
     })
 
-    test('an unparseable client config blocks that client instead of clobbering it', async () => {
+    test('an unparseable client config blocks the MCP entry only, never the skill', async () => {
         const configPath = join(fakeHome, '.claude.json')
         await writeFile(configPath, '{ "mcpServers": oops')
         const plan = await planForClient(claudeCode(), { env: env(), scope: 'user', includeMcp: true })
-        expect(plan.blocked).toMatch(/not valid JSON/)
+        expect(plan.mcpBlocked).toMatch(/not valid JSON/)
+        expect(plan.mcpPath).toBeNull()
+        // The skill files are independent of that config and must survive.
+        expect(plan.changes.filter((c) => c.label === 'skill')).toHaveLength(SKILL_FILES.length)
+
+        const applied = await applyPlan(plan, false)
+        // Corrupt config untouched...
+        expect(await readFile(configPath, 'utf8')).toBe('{ "mcpServers": oops')
+        // ...but the skill still landed, and is reported as such.
+        expect(applied.applied.filter((a) => a.result === 'created')).toHaveLength(SKILL_FILES.length)
+        expect(applied.errors).toEqual([])
+        expect(
+            (await readFile(join(fakeHome, '.claude', 'skills', 'mna', 'SKILL.md'), 'utf8')).length,
+        ).toBeGreaterThan(100)
+    })
+
+    test('a non-object at mcpServers is a hard stop, not a silent replacement', async () => {
+        const configPath = join(fakeHome, '.claude.json')
+        await writeFile(configPath, JSON.stringify({ mcpServers: 'not an object', keep: 1 }))
+        const plan = await planForClient(claudeCode(), { env: env(), scope: 'user', includeMcp: true })
+        expect(plan.mcpBlocked).toMatch(/non-object value at "mcpServers"/)
         expect(plan.mcpPath).toBeNull()
 
         await applyPlan(plan, false)
-        expect(await readFile(configPath, 'utf8')).toBe('{ "mcpServers": oops')
+        expect(JSON.parse(await readFile(configPath, 'utf8'))).toEqual({
+            mcpServers: 'not an object',
+            keep: 1,
+        })
     })
 
     test('reports up-to-date once the skill is installed', async () => {
@@ -114,11 +137,16 @@ describe('applyPlan', () => {
         })
     })
 
-    test('a blocked plan is a no-op', async () => {
-        await writeFile(join(fakeHome, '.claude.json'), 'nope')
-        const plan = await planForClient(claudeCode(), { env: env(), scope: 'user', includeMcp: true })
+    test('one unwritable path does not abandon the other files', async () => {
+        const plan = await planForClient(claudeCode(), { env: env(), scope: 'user', includeMcp: false })
+        // Make the references directory un-creatable by putting a file in its place.
+        await mkdir(join(fakeHome, '.claude', 'skills', 'mna'), { recursive: true })
+        await writeFile(join(fakeHome, '.claude', 'skills', 'mna', 'references'), 'in the way')
+
         const applied = await applyPlan(plan, false)
-        expect(applied.applied).toEqual([])
+        expect(applied.errors.length).toBeGreaterThan(0)
+        // SKILL.md is not under the blocked directory, so it still installs.
+        expect(applied.applied.some((a) => a.result === 'created')).toBe(true)
     })
 })
 
@@ -138,5 +166,29 @@ describe('planForClients', () => {
             includeMcp: false,
         })
         expect(plans[0]!.skillPath).toBe(join(fakeHome, 'project', '.claude', 'skills', 'mna'))
+    })
+})
+
+describe('path verification is surfaced, not hidden', () => {
+    test('a convention-only skill path is marked unverified on the plan', async () => {
+        const madeUp = { ...claudeCode(), id: 'madeup', skillPathVerified: false }
+        const plan = await planForClient(madeUp, { env: env(), scope: 'user', includeMcp: false })
+        expect(plan.skillPathVerified).toBe(false)
+    })
+
+    test('Claude Desktop config is flagged unverified on Linux but not on macOS', async () => {
+        const desktop = findClient('claude-desktop')!
+        const onLinux = await planForClient(desktop, {
+            env: env({ platform: 'linux' }),
+            scope: 'user',
+            includeMcp: true,
+        })
+        const onMac = await planForClient(desktop, {
+            env: env({ platform: 'darwin' }),
+            scope: 'user',
+            includeMcp: true,
+        })
+        expect(onLinux.mcpPathVerified).toBe(false)
+        expect(onMac.mcpPathVerified).toBe(true)
     })
 })

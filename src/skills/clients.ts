@@ -28,6 +28,8 @@ export interface McpTarget {
 
 export interface ClientDefinition {
     id: string
+    /** Extra names accepted by `--client`. */
+    aliases?: string[]
     label: string
     /** Path relative to $HOME whose existence means "this client is installed". */
     detectDir: string
@@ -38,6 +40,14 @@ export interface ClientDefinition {
     mcp?: McpTarget
     /** Extra note surfaced in `skills list` / install output. */
     note?: string
+    /**
+     * False when the skill directory follows the cross-agent convention but is
+     * NOT documented by the vendor — i.e. we believe the client reads it, but
+     * cannot prove it. Surfaced to the user rather than hidden.
+     */
+    skillPathVerified?: boolean
+    /** Platforms where the MCP config path is a convention, not vendor-documented. */
+    mcpPathUnverifiedOn?: NodeJS.Platform[]
 }
 
 function claudeDesktopConfigPath(env: HostEnv): string | null {
@@ -109,6 +119,10 @@ export const CLIENTS: ClientDefinition[] = [
             style: 'mcp-remote',
         },
         note: 'MCP server only — Claude Desktop does not read filesystem skills.',
+        // The Linux build is official (beta), but no Anthropic doc states that it
+        // reads ~/.config/Claude/claude_desktop_config.json — only macOS and
+        // Windows paths are documented.
+        mcpPathUnverifiedOn: ['linux'],
     },
     {
         id: 'windsurf',
@@ -136,14 +150,6 @@ export const CLIENTS: ClientDefinition[] = [
         note: 'MCP server only; targets the default VS Code profile.',
     },
     {
-        id: 'codex',
-        label: 'Codex CLI',
-        detectDir: '.codex',
-        userSkillsDir: '.codex/skills',
-        projectSkillsDir: '.codex/skills',
-        note: 'Skill only — Codex keeps MCP servers in TOML, which `mna` does not edit.',
-    },
-    {
         id: 'opencode',
         label: 'OpenCode',
         detectDir: '.config/opencode',
@@ -151,15 +157,18 @@ export const CLIENTS: ClientDefinition[] = [
         projectSkillsDir: '.opencode/skills',
     },
     {
-        // The cross-agent convention several tools now read (Codex, Amp, Warp,
-        // Copilot, Antigravity, …). Only written when it already exists, or on
-        // an explicit --client agents / --all.
+        // The cross-agent directory. Vendor-documented as a read location by
+        // Codex CLI (where it is the *only* documented user-level path),
+        // Gemini CLI, Cursor, OpenCode, and Windsurf. Note the Agent Skills
+        // spec itself defines skill *contents*, not discovery paths — this is
+        // a widely-adopted convention rather than a normative requirement.
         id: 'agents',
-        label: 'Universal agent skills',
+        aliases: ['codex'],
+        label: 'Universal agent skills (~/.agents)',
         detectDir: '.agents',
         userSkillsDir: '.agents/skills',
         projectSkillsDir: '.agents/skills',
-        note: 'Shared ~/.agents/skills directory read by several agents.',
+        note: 'Read by Codex CLI, Gemini CLI, Cursor, OpenCode and Windsurf. Codex CLI reads only this path — not ~/.codex/skills.',
     },
     {
         id: 'gemini-cli',
@@ -176,7 +185,7 @@ export const CLIENTS: ClientDefinition[] = [
 ]
 
 export function findClient(id: string): ClientDefinition | undefined {
-    return CLIENTS.find((c) => c.id === id)
+    return CLIENTS.find((c) => c.id === id || c.aliases?.includes(id))
 }
 
 async function isDir(path: string): Promise<boolean> {

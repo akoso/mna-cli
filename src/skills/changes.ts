@@ -1,5 +1,16 @@
-import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises'
-import { dirname } from 'node:path'
+import { randomBytes } from 'node:crypto'
+import { chmod, copyFile, mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises'
+import { basename, dirname, join } from 'node:path'
+// Import the ESM build explicitly: the package's `main` is a UMD bundle whose
+// lazy `require('./impl/format')` survives bundling and blows up at runtime in
+// dist/mna.js. The ESM entry uses static imports and bundles cleanly.
+import {
+    applyEdits,
+    modify,
+    parse as parseJsonc,
+    printParseErrorCode,
+    type ParseError,
+} from 'jsonc-parser/lib/esm/main.js'
 
 export type ChangeStatus = 'create' | 'overwrite' | 'unchanged'
 
@@ -9,7 +20,7 @@ export interface FileChange {
     path: string
     content: string
     status: ChangeStatus
-    /** Human label, e.g. "skill" or "rule". */
+    /** Human label, e.g. "skill" or "mcp". */
     label: string
 }
 
@@ -21,6 +32,8 @@ export interface JsonChange {
     value: unknown
     status: ChangeStatus
     label: string
+    /** The value embeds a credential — the file must end up owner-only. */
+    secret: boolean
 }
 
 export type PlannedChange = FileChange | JsonChange
@@ -31,6 +44,7 @@ export interface AppliedChange {
     backup?: string
 }
 
+/** The config exists but we cannot parse it — refuse rather than replace it. */
 export class UnparseableConfigError extends Error {
     constructor(
         readonly path: string,
@@ -38,6 +52,24 @@ export class UnparseableConfigError extends Error {
     ) {
         super(`${path} is not valid JSON (${reason}).`)
         this.name = 'UnparseableConfigError'
+    }
+}
+
+/**
+ * The config parses, but the key we need to merge into holds something that is
+ * not an object (a string, array, or null). Overwriting it would destroy data,
+ * so we refuse just as loudly as for a parse failure.
+ */
+export class ConfigConflictError extends Error {
+    constructor(
+        readonly path: string,
+        readonly keyPath: string[],
+        readonly actual: string,
+    ) {
+        super(
+            `${path} has a non-object value at "${keyPath.join('.')}" (found ${actual}). mna will not replace it.`,
+        )
+        this.name = 'ConfigConflictError'
     }
 }
 
@@ -50,59 +82,112 @@ async function readIfExists(path: string): Promise<string | null> {
     }
 }
 
-/**
- * Reads a JSON config that we intend to merge into. Missing file → `null`
- * (we will create it). Present but unparseable → throw, so callers can refuse
- * politely instead of destroying a config we do not understand.
- */
-export async function readMergeableJson(path: string): Promise<Record<string, unknown> | null> {
-    const raw = await readIfExists(path)
-    if (raw === null) return null
-    if (raw.trim() === '') return {}
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+    return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
 
-    let parsed: unknown
-    try {
-        parsed = JSON.parse(raw)
-    } catch (err) {
-        throw new UnparseableConfigError(path, (err as Error).message)
+function describeType(value: unknown): string {
+    if (value === null) return 'null'
+    if (Array.isArray(value)) return 'an array'
+    return `a ${typeof value}`
+}
+
+export interface ConfigDoc {
+    /** Raw text, or null when the file does not exist. */
+    text: string | null
+    /** Parsed object, or null when the file does not exist. */
+    data: Record<string, unknown> | null
+}
+
+/**
+ * Reads a config we intend to merge into. Comments and trailing commas are
+ * tolerated — VS Code's `mcp.json` and Gemini CLI's `settings.json` are JSONC
+ * by convention, and treating a commented config as "corrupt" would send users
+ * down a dead end.
+ */
+export async function readConfigDoc(path: string): Promise<ConfigDoc> {
+    const text = await readIfExists(path)
+    if (text === null) return { text: null, data: null }
+    if (text.trim() === '') return { text, data: {} }
+
+    const errors: ParseError[] = []
+    const parsed = parseJsonc(text, errors, { allowTrailingComma: true, disallowComments: false })
+
+    if (errors.length > 0) {
+        const first = errors[0]!
+        throw new UnparseableConfigError(path, `${printParseErrorCode(first.error)} at offset ${first.offset}`)
     }
-    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
-        throw new UnparseableConfigError(path, `expected an object, got ${Array.isArray(parsed) ? 'array' : typeof parsed}`)
+    if (!isPlainObject(parsed)) {
+        throw new UnparseableConfigError(path, `expected an object, got ${describeType(parsed)}`)
     }
-    return parsed as Record<string, unknown>
+    return { text, data: parsed }
+}
+
+/** Back-compat alias used by callers that only want the parsed object. */
+export async function readMergeableJson(path: string): Promise<Record<string, unknown> | null> {
+    return (await readConfigDoc(path)).data
 }
 
 function getAtPath(root: Record<string, unknown>, keyPath: string[]): unknown {
     let node: unknown = root
     for (const key of keyPath) {
-        if (node === null || typeof node !== 'object' || Array.isArray(node)) return undefined
-        node = (node as Record<string, unknown>)[key]
+        if (!isPlainObject(node)) return undefined
+        node = node[key]
     }
     return node
 }
 
-function setAtPath(root: Record<string, unknown>, keyPath: string[], value: unknown): void {
-    let node = root
-    for (const key of keyPath.slice(0, -1)) {
-        const next = node[key]
-        if (next === null || typeof next !== 'object' || Array.isArray(next)) {
-            node[key] = {}
+/**
+ * Every container along `keyPath` must be absent or a plain object. A string,
+ * array, or null in the way is a hard stop — silently replacing it with `{}`
+ * would delete whatever the user had there.
+ */
+function assertPathMergeable(path: string, root: Record<string, unknown>, keyPath: string[]): void {
+    let node: unknown = root
+    for (let i = 0; i < keyPath.length - 1; i++) {
+        const key = keyPath[i]!
+        node = (node as Record<string, unknown>)[key]
+        if (node === undefined) return
+        if (!isPlainObject(node)) {
+            throw new ConfigConflictError(path, keyPath.slice(0, i + 1), describeType(node))
         }
-        node = node[key] as Record<string, unknown>
     }
-    node[keyPath[keyPath.length - 1]!] = value
 }
 
 function sameJson(a: unknown, b: unknown): boolean {
     return JSON.stringify(a) === JSON.stringify(b)
 }
 
+/**
+ * Writes via a temp file in the same directory plus `rename()`, which is
+ * atomic on POSIX. A crash, a full disk, or a Ctrl-C mid-write therefore
+ * leaves the original file intact rather than truncated — this matters because
+ * `~/.claude.json` holds Claude Code's entire user state and is routinely
+ * multiple megabytes.
+ */
+export async function writeFileAtomic(path: string, content: string, mode?: number): Promise<void> {
+    const tmp = join(dirname(path), `.${basename(path)}.mna-tmp-${process.pid}-${randomBytes(4).toString('hex')}`)
+    try {
+        await writeFile(tmp, content, 'utf8')
+        const targetMode = mode ?? (await currentMode(path))
+        if (targetMode !== undefined) await chmod(tmp, targetMode)
+        await rename(tmp, path)
+    } catch (err) {
+        await rm(tmp, { force: true })
+        throw err
+    }
+}
+
+async function currentMode(path: string): Promise<number | undefined> {
+    try {
+        return (await stat(path)).mode & 0o777
+    } catch {
+        return undefined
+    }
+}
+
 /** Decide create/overwrite/unchanged for a file write without touching disk. */
-export async function planFileChange(
-    path: string,
-    content: string,
-    label: string,
-): Promise<FileChange> {
+export async function planFileChange(path: string, content: string, label: string): Promise<FileChange> {
     const existing = await readIfExists(path)
     const status: ChangeStatus =
         existing === null ? 'create' : existing === content ? 'unchanged' : 'overwrite'
@@ -115,30 +200,54 @@ export async function planJsonChange(
     keyPath: string[],
     value: unknown,
     label: string,
+    secret = false,
 ): Promise<JsonChange> {
-    const existing = await readMergeableJson(path)
+    const { data } = await readConfigDoc(path)
     let status: ChangeStatus = 'create'
-    if (existing !== null) {
-        const current = getAtPath(existing, keyPath)
+    if (data !== null) {
+        assertPathMergeable(path, data, keyPath)
+        const current = getAtPath(data, keyPath)
         status = current === undefined ? 'create' : sameJson(current, value) ? 'unchanged' : 'overwrite'
     }
-    return { kind: 'json', path, keyPath, value, status, label }
+    return { kind: 'json', path, keyPath, value, status, label, secret }
 }
 
 function backupSuffix(now = new Date()): string {
     return now.toISOString().replace(/[-:]/g, '').replace(/\..+$/, '')
 }
 
-/** Copy `path` aside before we modify it. Returns the backup path. */
+/** How many timestamped backups of a given file we keep around. */
+export const BACKUP_RETENTION = 3
+
+async function pruneBackups(path: string, keep = BACKUP_RETENTION): Promise<void> {
+    const dir = dirname(path)
+    const prefix = `${basename(path)}.mna-backup-`
+    try {
+        const entries = (await readdir(dir)).filter((name) => name.startsWith(prefix)).sort()
+        for (const stale of entries.slice(0, Math.max(0, entries.length - keep))) {
+            await rm(join(dir, stale), { force: true })
+        }
+    } catch {
+        // Pruning is best-effort; never fail an install over it.
+    }
+}
+
+/**
+ * Copy `path` aside before we modify it. Backups inherit 0600 because the
+ * originals can contain OAuth tokens and API keys, and only the most recent
+ * few are kept.
+ */
 export async function backupFile(path: string, now?: Date): Promise<string> {
     const target = `${path}.mna-backup-${backupSuffix(now)}`
     await copyFile(path, target)
+    await chmod(target, 0o600)
+    await pruneBackups(path)
     return target
 }
 
 /**
  * Performs a planned change. `unchanged` changes are no-ops. Anything that
- * modifies an existing file makes a timestamped backup next to it first.
+ * modifies an existing file is backed up first, and every write is atomic.
  */
 export async function applyChange(change: PlannedChange): Promise<AppliedChange> {
     if (change.status === 'unchanged') {
@@ -149,14 +258,37 @@ export async function applyChange(change: PlannedChange): Promise<AppliedChange>
 
     if (change.kind === 'file') {
         const backup = change.status === 'overwrite' ? await backupFile(change.path) : undefined
-        await writeFile(change.path, change.content, 'utf8')
+        await writeFileAtomic(change.path, change.content)
         return { path: change.path, result: change.status === 'create' ? 'created' : 'updated', backup }
     }
 
-    const existing = await readMergeableJson(change.path)
-    const backup = existing === null ? undefined : await backupFile(change.path)
-    const next = existing ?? {}
-    setAtPath(next, change.keyPath, change.value)
-    await writeFile(change.path, `${JSON.stringify(next, null, 2)}\n`, 'utf8')
-    return { path: change.path, result: existing === null ? 'created' : 'updated', backup }
+    const { text, data } = await readConfigDoc(change.path)
+    if (data !== null) assertPathMergeable(change.path, data, change.keyPath)
+    const backup = text === null ? undefined : await backupFile(change.path)
+
+    // For an existing config, edit the text in place: jsonc-parser rewrites only
+    // the affected span, so comments, key order, and formatting all survive.
+    const next =
+        text === null
+            ? `${JSON.stringify(buildNested(change.keyPath, change.value), null, 2)}\n`
+            : applyEdits(
+                  text,
+                  modify(text, change.keyPath, change.value, {
+                      formattingOptions: { insertSpaces: true, tabSize: 2 },
+                  }),
+              )
+
+    await writeFileAtomic(change.path, next, change.secret ? 0o600 : undefined)
+    return { path: change.path, result: text === null ? 'created' : 'updated', backup }
+}
+
+function buildNested(keyPath: string[], value: unknown): Record<string, unknown> {
+    const root: Record<string, unknown> = {}
+    let node = root
+    for (const key of keyPath.slice(0, -1)) {
+        node[key] = {}
+        node = node[key] as Record<string, unknown>
+    }
+    node[keyPath[keyPath.length - 1]!] = value
+    return root
 }

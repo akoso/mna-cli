@@ -45,7 +45,7 @@ export async function maybeOfferSkillInstall(
     const env = options.env ?? hostEnv()
     const plans = (
         await planForClients(CLIENTS, { env, scope: 'user', includeMcp: false })
-    ).filter((plan) => plan.installed && plan.skillPath !== null && !plan.blocked)
+    ).filter((plan) => plan.installed && plan.skillPath !== null && plan.skillPathVerified)
 
     if (plans.length === 0) return 'skipped-none-detected'
 

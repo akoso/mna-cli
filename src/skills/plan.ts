@@ -1,6 +1,7 @@
 import { join } from 'node:path'
 import {
     applyChange,
+    ConfigConflictError,
     planFileChange,
     planJsonChange,
     UnparseableConfigError,
@@ -36,9 +37,17 @@ export interface ClientPlan {
     skillPath: string | null
     mcpPath: string | null
     changes: PlannedChange[]
-    /** Set when we cannot safely touch this client (e.g. unparseable config). */
-    blocked?: string
+    /**
+     * Why the MCP entry was dropped for this client (unparseable or conflicting
+     * config). Scoped to the MCP entry only — the skill files are unaffected
+     * and still install.
+     */
+    mcpBlocked?: string
     note?: string
+    /** False when the skill directory is a community convention, not vendor-documented. */
+    skillPathVerified: boolean
+    /** False when the MCP config path is not vendor-documented on this platform. */
+    mcpPathVerified: boolean
 }
 
 export function hasPendingChanges(plan: ClientPlan): boolean {
@@ -88,6 +97,8 @@ export async function planForClient(client: ClientDefinition, options: PlanOptio
         mcpPath,
         changes: [],
         note: client.note,
+        skillPathVerified: client.skillPathVerified ?? true,
+        mcpPathVerified: !client.mcpPathUnverifiedOn?.includes(env.platform),
     }
 
     if (dir) {
@@ -104,11 +115,14 @@ export async function planForClient(client: ClientDefinition, options: PlanOptio
                     [client.mcp.serversKey, MCP_SERVER_NAME],
                     buildMcpEntry(client.mcp.style, { apiKey }),
                     'mcp',
+                    Boolean(apiKey),
                 ),
             )
         } catch (err) {
-            if (err instanceof UnparseableConfigError) {
-                plan.blocked = `${err.message} Fix or move it, then re-run — mna will not overwrite a config it cannot parse.`
+            if (err instanceof UnparseableConfigError || err instanceof ConfigConflictError) {
+                // Drop *only* the MCP entry. The skill files are independent of
+                // this config and must still install.
+                plan.mcpBlocked = `${err.message} Fix or move it, then re-run \`mna skills install\` — the skill files are unaffected.`
                 plan.mcpPath = null
             } else {
                 throw err
@@ -130,20 +144,37 @@ export async function planForClients(
     return plans
 }
 
+export interface ApplyError {
+    path: string
+    message: string
+    /** Backup taken before the failed write, if any — the user's escape hatch. */
+    backup?: string
+}
+
 export interface AppliedClient {
     id: string
     label: string
     applied: AppliedChange[]
+    errors: ApplyError[]
 }
 
-/** Executes a plan. `dryRun` short-circuits before any filesystem write. */
+/**
+ * Executes a plan. `dryRun` short-circuits before any filesystem write. A
+ * failure on one change is recorded and the rest still run, so a single
+ * unwritable path cannot silently abandon the other files.
+ */
 export async function applyPlan(plan: ClientPlan, dryRun: boolean): Promise<AppliedClient> {
     const applied: AppliedChange[] = []
-    if (dryRun || plan.blocked) {
-        return { id: plan.id, label: plan.label, applied }
+    const errors: ApplyError[] = []
+    if (dryRun) {
+        return { id: plan.id, label: plan.label, applied, errors }
     }
     for (const change of plan.changes) {
-        applied.push(await applyChange(change))
+        try {
+            applied.push(await applyChange(change))
+        } catch (err) {
+            errors.push({ path: change.path, message: err instanceof Error ? err.message : String(err) })
+        }
     }
-    return { id: plan.id, label: plan.label, applied }
+    return { id: plan.id, label: plan.label, applied, errors }
 }

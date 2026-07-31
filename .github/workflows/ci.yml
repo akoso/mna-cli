@@ -33,3 +33,14 @@ jobs:
 
       - name: Test
         run: bun test
+
+      # The published artifact is dist/mna.js running on plain Node, which the
+      # unit tests never exercise. A dependency whose bundled output only breaks
+      # at runtime (e.g. a lazy `require` in a UMD build) is invisible without
+      # this step.
+      - name: Build and smoke-test the npm bundle on Node
+        run: |
+          bun run build
+          node dist/mna.js --version
+          node dist/mna.js skills list --all --json > /dev/null
+          node dist/mna.js skills install --dry-run --json > /dev/null

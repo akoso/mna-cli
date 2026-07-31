@@ -63,6 +63,7 @@ import { collectionsShareCommand } from '../commands/collections/share'
 import { collectionsOpenSharedCommand } from '../commands/collections/open-shared'
 import { skillsInstallCommand } from '../commands/skills/install'
 import { skillsListCommand } from '../commands/skills/list'
+import { skillsUninstallCommand } from '../commands/skills/uninstall'
 
 const trips = defineCommand({
     meta: { name: 'trips', description: 'View and manage trips.' },
@@ -194,6 +195,7 @@ const skills = defineCommand({
     subCommands: {
         list: skillsListCommand,
         install: skillsInstallCommand,
+        uninstall: skillsUninstallCommand,
     },
 })
 

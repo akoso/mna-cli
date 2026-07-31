@@ -1,7 +1,8 @@
 import { describe, expect, test, beforeEach, afterEach } from 'bun:test'
-import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { CLIENTS } from './clients'
 import type { HostEnv } from './host-env'
 import { maybeOfferSkillInstall } from './post-login-prompt'
 import { setSetting } from '../util/settings'
@@ -110,5 +111,38 @@ describe('maybeOfferSkillInstall', () => {
         expect(
             (await readFile(join(fakeHome, '.cursor', 'skills', 'mna', 'SKILL.md'), 'utf8')).length,
         ).toBeGreaterThan(100)
+    })
+})
+
+describe('post-login offer safety', () => {
+    test('offers the shared ~/.agents directory when the user already has one', async () => {
+        // Codex CLI, Gemini CLI, Cursor, OpenCode and Windsurf all document
+        // reading this path, so one copy there serves several agents.
+        await mkdir(join(fakeHome, '.agents'), { recursive: true })
+        expect(await maybeOfferSkillInstall(options())).toBe('installed')
+        expect(asked).toEqual(['Install the mna skill for Universal agent skills (~/.agents)?'])
+        expect(
+            (await readFile(join(fakeHome, '.agents', 'skills', 'mna', 'SKILL.md'), 'utf8')).length,
+        ).toBeGreaterThan(100)
+    })
+
+    test('the offer is restricted to vendor-documented skill directories', async () => {
+        // The guard that makes the above safe: anything marked unverified is
+        // never written without an explicit `mna skills install`.
+        for (const client of CLIENTS) {
+            if (!client.userSkillsDir) continue
+            expect(client.skillPathVerified ?? true).toBe(true)
+        }
+    })
+
+    test('a corrupt MCP config does not stop the skill being offered', async () => {
+        await mkdir(join(fakeHome, '.claude'), { recursive: true })
+        await writeFile(join(fakeHome, '.claude.json'), 'not json at all')
+        expect(await maybeOfferSkillInstall(options())).toBe('installed')
+        expect(
+            (await readFile(join(fakeHome, '.claude', 'skills', 'mna', 'SKILL.md'), 'utf8')).length,
+        ).toBeGreaterThan(100)
+        // ...and the broken config is still untouched.
+        expect(await readFile(join(fakeHome, '.claude.json'), 'utf8')).toBe('not json at all')
     })
 })

@@ -52,9 +52,17 @@ export const skillsListCommand = defineCommand({
                         label: plan.label,
                         installed: plan.installed,
                         detectedAt: plan.detectedAt,
-                        skill: { path: plan.skillPath, state: skillState(plan) },
-                        mcp: { path: plan.mcpPath, state: mcpState(plan) },
-                        blocked: plan.blocked ?? null,
+                        skill: {
+                            path: plan.skillPath,
+                            state: skillState(plan),
+                            pathVerified: plan.skillPathVerified,
+                        },
+                        mcp: {
+                            path: plan.mcpPath,
+                            state: mcpState(plan),
+                            pathVerified: plan.mcpPathVerified,
+                        },
+                        mcpBlocked: plan.mcpBlocked ?? null,
                     })),
                 })
                 return
@@ -73,17 +81,30 @@ export const skillsListCommand = defineCommand({
                     client: plan.label,
                     id: plan.id,
                     detected: plan.installed ? 'yes' : 'no',
-                    skill: skillState(plan),
-                    mcp: mcpState(plan),
+                    skill: plan.skillPathVerified ? skillState(plan) : `${skillState(plan)} (?)`,
+                    mcp: plan.mcpPathVerified ? mcpState(plan) : `${mcpState(plan)} (?)`,
                     path: plan.skillPath ? tildify(plan.skillPath, env.home) : '—',
                 })),
                 emptyMessage: 'No supported AI clients detected. Use --all to see everything mna can install into.',
             })
 
             for (const plan of visible) {
-                if (plan.blocked) {
-                    process.stdout.write(`${colors.yellow('!')} ${plan.label}: ${plan.blocked}\n`)
+                if (plan.mcpBlocked) {
+                    process.stdout.write(
+                        `${colors.yellow('!')} ${plan.label}: ${tildify(plan.mcpBlocked, env.home)}\n`,
+                    )
                 }
+            }
+
+            if (
+                visible.some((p) => !p.skillPathVerified && p.skillPath) ||
+                visible.some((p) => !p.mcpPathVerified && p.mcpPath)
+            ) {
+                process.stdout.write(
+                    colors.dim(
+                        '\n(?) path follows convention but is not documented by that vendor for your OS —\n    the client may not actually read it.\n',
+                    ),
+                )
             }
 
             if (visible.some((p) => skillState(p) !== 'up-to-date')) {

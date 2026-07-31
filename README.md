@@ -96,14 +96,32 @@ mna skills install --client cursor   # one client only
 mna skills install --all --yes       # every supported client, no prompt
 mna skills install --no-mcp          # skill only, skip the MCP server entry
 mna skills install --scope project   # into ./.claude/skills etc. instead of $HOME
+mna skills uninstall                 # remove the skill directory again
 ```
 
-Installs are idempotent: identical files are left alone, JSON configs are **merged** (never
-overwritten wholesale), anything modified is backed up next to itself as
-`<file>.mna-backup-<timestamp>`, and a config `mna` can't parse is reported rather than
-replaced.
+`--scope project` relocates the **skill** only; MCP servers have no project-level equivalent in
+most clients, so they stay in the user-level config either way.
+
+Installs are designed to be boring and reversible:
+
+- **Idempotent** — identical files are left alone; a second run reports "already up to date".
+- **Merged, never overwritten** — only the single `mcpServers.my-next-adventure` key is set.
+  Configs with `//` comments or trailing commas (VS Code, Gemini CLI) are edited in place, so
+  your comments and key order survive. The object being merged into may be re-indented;
+  nothing else in the file is touched.
+- **Atomic** — every write goes to a temp file and is `rename()`d into place, so an interrupt
+  or a full disk cannot truncate a large config like `~/.claude.json`.
+- **Backed up** — anything modified is copied to `<file>.mna-backup-<timestamp>` first (mode
+  `0600`, most recent 3 kept).
+- **Refuses what it doesn't understand** — a config that won't parse, or that has a non-object
+  where `mcpServers` should be, is reported and skipped rather than replaced. That only skips
+  the MCP entry; the skill files still install.
+- **Isolated failures** — an unwritable path for one client doesn't abandon the others, and the
+  summary reports what was actually written. Exit code is non-zero if anything failed.
 
 ### Supported clients
+
+Every path below is taken from that vendor's own documentation, not from convention.
 
 | Client | `--client` | Skill | MCP server config |
 |---|---|---|---|
@@ -112,17 +130,32 @@ replaced.
 | Claude Desktop | `claude-desktop` | — | `claude_desktop_config.json` (per-OS) → `mcpServers` |
 | Windsurf / Devin Desktop | `windsurf` | `~/.codeium/windsurf/skills/mna/` | `~/.codeium/windsurf/mcp_config.json` |
 | VS Code (Copilot agent mode) | `vscode` | — | `<VS Code user dir>/mcp.json` → `servers` |
-| Universal agent skills | `agents` | `~/.agents/skills/mna/` | — |
-| Codex CLI | `codex` | `~/.codex/skills/mna/` | — (TOML config, not touched) |
+| Shared agent directory | `agents`, `codex` | `~/.agents/skills/mna/` | — |
 | OpenCode | `opencode` | `~/.config/opencode/skills/mna/` | — |
 | Gemini CLI | `gemini-cli` | `~/.gemini/skills/mna/` | `~/.gemini/settings.json` → `mcpServers` |
+
+`~/.agents/skills/` is documented as a read location by Codex CLI, Gemini CLI, Cursor, OpenCode
+and Windsurf, so one copy there serves several agents. **Codex CLI reads only that path** —
+`~/.codex/skills/` is a third-party compatibility claim that OpenAI's own docs do not make, so
+`--client codex` installs to `~/.agents/skills/`. Codex keeps MCP servers in TOML, which `mna`
+does not edit.
+
+Two caveats the CLI also prints, marked `(?)` in the plan:
+
+- **Claude Desktop on Linux.** The Linux build is official (beta), but no Anthropic doc states
+  it reads `~/.config/Claude/claude_desktop_config.json` — only the macOS and Windows paths are
+  documented. On Linux `mna` writes the conventional path and tells you it is unverified.
+- Anything else added on convention alone is flagged the same way rather than silently reported
+  as installed.
 
 The MCP entry points at the hosted server `https://mcp.mynextadventure.cloud/mcp`, written in
 whichever shape the client expects — `{"type":"http","url":…}` for Claude Code and VS Code,
 `{"url":…}` for Cursor, `{"httpUrl":…}` for Gemini CLI, `{"serverUrl":…}` for Windsurf, and the
 `npx -y mcp-remote` stdio bridge for Claude Desktop, which has no native remote transport. If
-you're logged in, your API key is embedded as an `X-API-Key` header — otherwise the client
-authenticates over OAuth on first use.
+you're logged in, **your API key is written into that config file in plain text** — that is how
+these clients take credentials. `mna` sets any config it writes a key into to mode `0600`, and
+says so before writing. Prefer OAuth? Use `--no-mcp`, or run `mna skills install` before
+`mna login` and let the client do its own OAuth handshake on first use.
 
 ### Manual install (fallback)
 
@@ -161,6 +194,7 @@ Every command supports `--json` for piping into `jq` or Claude.
 |---|---|
 | `mna skills list [--all] [--scope=user\|project]` | Show detected AI clients and whether the skill/MCP server is installed. |
 | `mna skills install [--client=<id>] [--all] [--scope=user\|project] [--no-mcp] [--dry-run] [--yes]` | Install the skill (and MCP server entry) into your AI clients. |
+| `mna skills uninstall [--client=<id>] [--scope=user\|project] [--dry-run] [--yes]` | Remove the installed skill directory. |
 
 ### Trips
 
