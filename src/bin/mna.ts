@@ -61,6 +61,9 @@ import { collectionsAddGoalCommand } from '../commands/collections/add-goal'
 import { collectionsRemoveGoalCommand } from '../commands/collections/remove-goal'
 import { collectionsShareCommand } from '../commands/collections/share'
 import { collectionsOpenSharedCommand } from '../commands/collections/open-shared'
+import { skillsInstallCommand } from '../commands/skills/install'
+import { skillsListCommand } from '../commands/skills/list'
+import { skillsUninstallCommand } from '../commands/skills/uninstall'
 
 const trips = defineCommand({
     meta: { name: 'trips', description: 'View and manage trips.' },
@@ -184,6 +187,18 @@ const collections = defineCommand({
     },
 })
 
+const skills = defineCommand({
+    meta: {
+        name: 'skills',
+        description: 'Install the mna skill and MCP server into your AI coding clients.',
+    },
+    subCommands: {
+        list: skillsListCommand,
+        install: skillsInstallCommand,
+        uninstall: skillsUninstallCommand,
+    },
+})
+
 const main = defineCommand({
     meta: {
         name: 'mna',
@@ -205,6 +220,7 @@ const main = defineCommand({
         votes,
         goals,
         collections,
+        skills,
         config: configCommand,
     },
 })

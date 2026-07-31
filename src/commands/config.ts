@@ -1,13 +1,21 @@
 import { defineCommand } from 'citty'
 import { loadCredentials, resolveBaseUrl, saveCredentials } from '../auth/credentials-store'
 import { reportAndExit } from '../util/errors'
+import { loadSettings, setSetting } from '../util/settings'
 import { renderJson } from '../render/json'
 
-const KNOWN_KEYS = ['apiBaseUrl'] as const
+const KNOWN_KEYS = ['apiBaseUrl', 'skills.prompt'] as const
 type ConfigKey = (typeof KNOWN_KEYS)[number]
 
 function isKnownKey(key: string): key is ConfigKey {
     return (KNOWN_KEYS as readonly string[]).includes(key)
+}
+
+function parseBoolean(value: string): boolean {
+    const normalized = value.trim().toLowerCase()
+    if (['true', '1', 'yes', 'on'].includes(normalized)) return true
+    if (['false', '0', 'no', 'off'].includes(normalized)) return false
+    throw new Error(`Expected a boolean (true|false) for skills.prompt, got: ${value}`)
 }
 
 export const configGet = defineCommand({
@@ -22,13 +30,15 @@ export const configGet = defineCommand({
                 throw new Error(`Unknown config key: ${args.key}. Known: ${KNOWN_KEYS.join(', ')}.`)
             }
 
-            const creds = await loadCredentials()
-            const value = args.key === 'apiBaseUrl' ? resolveBaseUrl(creds) : undefined
+            const value: string | boolean =
+                args.key === 'apiBaseUrl'
+                    ? resolveBaseUrl(await loadCredentials())
+                    : ((await loadSettings())['skills.prompt'] ?? true)
 
             if (args.json) {
                 renderJson({ [args.key]: value })
             } else {
-                process.stdout.write(`${value ?? ''}\n`)
+                process.stdout.write(`${value}\n`)
             }
         } catch (err) {
             reportAndExit(err)
@@ -48,15 +58,18 @@ export const configSet = defineCommand({
                 throw new Error(`Unknown config key: ${args.key}. Known: ${KNOWN_KEYS.join(', ')}.`)
             }
 
+            if (args.key === 'skills.prompt') {
+                await setSetting('skills.prompt', parseBoolean(args.value))
+                process.stdout.write('Updated skills.prompt.\n')
+                return
+            }
+
             const creds = await loadCredentials()
             if (!creds) {
                 throw new Error('No credentials file found. Run `mna login --paste-token <key>` first.')
             }
 
-            if (args.key === 'apiBaseUrl') {
-                creds.apiBaseUrl = args.value
-            }
-
+            creds.apiBaseUrl = args.value
             await saveCredentials(creds)
             process.stdout.write(`Updated ${args.key}.\n`)
         } catch (err) {

@@ -3,9 +3,9 @@
 > Command-line tool for [My Next Adventure](https://mynextadventure.cloud).
 
 `mna` is an open-source CLI for managing your trips on My Next Adventure.
-It also ships as a [Claude Code](https://claude.com/claude-code) skill so Claude
-can plan, research, build, cost, and manage whole trips on your behalf — see
-[`skills/mna/SKILL.md`](./skills/mna/SKILL.md).
+It also ships as an agent skill — run `mna skills install` and your AI coding
+agent (Claude Code, Cursor, …) can plan, research, build, cost, and manage whole
+trips on your behalf. See [`skills/mna/SKILL.md`](./skills/mna/SKILL.md).
 
 Status: **pre-1.0, alpha.** Tagged releases publish binaries to GitHub
 Releases. npm and Homebrew distribution land with the first tag.
@@ -75,27 +75,103 @@ If you prefer headless / paste-token login:
 mna login --paste-token <key>      # generate the key from the user menu on app.mynextadventure.cloud
 ```
 
-## Use it as a Claude Code skill
+## Use it from your AI coding agent
 
-`mna` doubles as a [Claude Code](https://claude.com/claude-code) skill — install it and Claude
-can plan, research, cost, and manage whole trips for you. **One command:**
+`mna` doubles as an agent **skill** — install it and your agent can plan, research, cost, and
+manage whole trips for you. **One command:**
 
 ```bash
-git clone --depth 1 https://github.com/MantaCodeDevs/mna-cli /tmp/mna-cli && mkdir -p ~/.claude/skills && cp -r /tmp/mna-cli/skills/mna ~/.claude/skills/
+mna skills install
 ```
 
-This drops the skill at `~/.claude/skills/mna/`. Start (or `/reload`) Claude Code and just ask
-it to plan a trip — the skill triggers on its own. (Already have the repo cloned? Just
-`cp -r skills/mna ~/.claude/skills/`.)
-
-Installed via npm? The skill ships inside the package — no clone needed:
+It detects the AI clients on your machine, shows exactly what it will write where, and asks
+once. After a successful `mna login` on an interactive terminal it offers the same thing with a
+single `y` (silence it with `mna config set skills.prompt false`).
 
 ```bash
+mna skills list                      # what's detected, and what's already installed
+mna skills list --all                # every client mna knows how to install into
+mna skills install --dry-run         # show the writes, change nothing
+mna skills install --client cursor   # one client only
+mna skills install --all --yes       # every supported client, no prompt
+mna skills install --no-mcp          # skill only, skip the MCP server entry
+mna skills install --scope project   # into ./.claude/skills etc. instead of $HOME
+mna skills uninstall                 # remove the skill directory again
+```
+
+`--scope project` relocates the **skill** only; MCP servers have no project-level equivalent in
+most clients, so they stay in the user-level config either way.
+
+Installs are designed to be boring and reversible:
+
+- **Idempotent** — identical files are left alone; a second run reports "already up to date".
+- **Merged, never overwritten** — only the single `mcpServers.my-next-adventure` key is set.
+  Configs with `//` comments or trailing commas (VS Code, Gemini CLI) are edited in place, so
+  your comments and key order survive. The object being merged into may be re-indented;
+  nothing else in the file is touched.
+- **Atomic** — every write goes to a temp file and is `rename()`d into place, so an interrupt
+  or a full disk cannot truncate a large config like `~/.claude.json`.
+- **Backed up** — anything modified is copied to `<file>.mna-backup-<timestamp>` first (mode
+  `0600`, most recent 3 kept).
+- **Refuses what it doesn't understand** — a config that won't parse, or that has a non-object
+  where `mcpServers` should be, is reported and skipped rather than replaced. That only skips
+  the MCP entry; the skill files still install.
+- **Isolated failures** — an unwritable path for one client doesn't abandon the others, and the
+  summary reports what was actually written. Exit code is non-zero if anything failed.
+
+### Supported clients
+
+Every skill directory below is the one that vendor documents — sources linked, and `mna skills
+list --json` reports the same URL per client so you can check without taking our word for it.
+
+| Client | `--client` | Skill | MCP server config |
+|---|---|---|---|
+| Claude Code | `claude-code` | [`~/.claude/skills/mna/`](https://code.claude.com/docs/en/skills) | `~/.claude.json` → `mcpServers` |
+| Cursor | `cursor` | [`~/.cursor/skills/mna/`](https://cursor.com/docs/skills) | `~/.cursor/mcp.json` → `mcpServers` |
+| Claude Desktop | `claude-desktop` | — | `claude_desktop_config.json` (per-OS) → `mcpServers` |
+| Windsurf / Devin Desktop | `windsurf` | [`~/.codeium/windsurf/skills/mna/`](https://docs.devin.ai/desktop/cascade/skills) | `~/.codeium/windsurf/mcp_config.json` |
+| VS Code (Copilot agent mode) | `vscode` | — | `<VS Code user dir>/mcp.json` → `servers` |
+| Shared agent directory | `agents`, `codex` | [`~/.agents/skills/mna/`](https://learn.chatgpt.com/docs/build-skills) | — |
+| OpenCode | `opencode` | [`~/.config/opencode/skills/mna/`](https://opencode.ai/docs/skills/) | — |
+| Gemini CLI | `gemini-cli` | [`~/.gemini/skills/mna/`](https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/skills.md) | `~/.gemini/settings.json` → `mcpServers` |
+
+`~/.agents/skills/` is documented as a read location by Codex CLI, Gemini CLI, Cursor, OpenCode
+and Windsurf, so one copy there serves several agents. Worth being precise about what that is:
+five vendors independently documenting the same path, **not** a spec guarantee — the Agent Skills
+standard defines what a skill contains, not where clients look for one. Claude Code does not read
+it. **Codex CLI reads only that path** — `~/.codex/skills/` is a third-party compatibility claim
+that OpenAI's own docs do not make, so `--client codex` installs to `~/.agents/skills/`. Codex
+keeps MCP servers in TOML, which `mna` does not edit.
+
+Two caveats the CLI also prints, marked `(?)` in the plan:
+
+- **Claude Desktop on Linux.** The Linux build is official (beta), but no Anthropic doc states
+  it reads `~/.config/Claude/claude_desktop_config.json` — only the macOS and Windows paths are
+  documented. On Linux `mna` writes the conventional path and tells you it is unverified.
+- Anything else added on convention alone is flagged the same way rather than silently reported
+  as installed.
+
+The MCP entry points at the hosted server `https://mcp.mynextadventure.cloud/mcp`, written in
+whichever shape the client expects — `{"type":"http","url":…}` for Claude Code and VS Code,
+`{"url":…}` for Cursor, `{"httpUrl":…}` for Gemini CLI, `{"serverUrl":…}` for Windsurf, and the
+`npx -y mcp-remote` stdio bridge for Claude Desktop, which has no native remote transport. If
+you're logged in, **your API key is written into that config file in plain text** — that is how
+these clients take credentials. `mna` sets any config it writes a key into to mode `0600`, and
+says so before writing. Prefer OAuth? Use `--no-mcp`, or run `mna skills install` before
+`mna login` and let the client do its own OAuth handshake on first use.
+
+### Manual install (fallback)
+
+The skill is plain markdown driving the CLI, so any agent that reads `SKILL.md` files can use
+it. Copy it wherever your agent looks:
+
+```bash
+# from a clone
+mkdir -p ~/.claude/skills && cp -r skills/mna ~/.claude/skills/
+
+# from the npm package
 mkdir -p ~/.claude/skills && cp -r "$(npm root -g)/@mantacodedevs/mna-cli/skills/mna" ~/.claude/skills/
 ```
-
-Other AI coding agents can use the same `skills/mna/SKILL.md` playbook — it's plain
-markdown driving the CLI.
 
 The skill drives the `mna` CLI, so install the CLI (above) and run `mna login` first.
 
@@ -113,6 +189,15 @@ Every command supports `--json` for piping into `jq` or Claude.
 | `mna keys list` | List active API keys with `current` flag on the calling key. |
 | `mna keys revoke <name> [--yes]` | Revoke an API key by name. |
 | `mna config get\|set apiBaseUrl [<url>]` | Read/override the API base URL locally. |
+| `mna config get\|set skills.prompt [true\|false]` | Toggle the post-login "install the skill?" offer. |
+
+### Agent integration
+
+| Command | Description |
+|---|---|
+| `mna skills list [--all] [--scope=user\|project]` | Show detected AI clients and whether the skill/MCP server is installed. |
+| `mna skills install [--client=<id>] [--all] [--scope=user\|project] [--no-mcp] [--dry-run] [--yes]` | Install the skill (and MCP server entry) into your AI clients. |
+| `mna skills uninstall [--client=<id>] [--scope=user\|project] [--dry-run] [--yes]` | Remove the installed skill directory. |
 
 ### Trips
 
@@ -220,7 +305,8 @@ The contract of record is `https://api.mynextadventure.cloud/v1/openapi.json`. I
 |---|---|
 | `MNA_API_KEY` | Override the key from the credentials file. Useful for CI. |
 | `MNA_API_BASE_URL` | Override the API base URL. Useful for local dev. |
-| `XDG_CONFIG_HOME` | Where the credentials file is stored. Default: `~/.config`. |
+| `XDG_CONFIG_HOME` | Where the credentials and settings files are stored. Default: `~/.config`. |
+| `CI=1` | Suppresses all interactive prompts, including the post-login skill offer. |
 | `MNA_DEBUG=1` | Print error stack traces. |
 | `NO_COLOR=1` | Disable ANSI colors. |
 
