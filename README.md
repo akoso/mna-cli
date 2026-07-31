@@ -3,9 +3,9 @@
 > Command-line tool for [My Next Adventure](https://mynextadventure.cloud).
 
 `mna` is an open-source CLI for managing your trips on My Next Adventure.
-It also ships as a [Claude Code](https://claude.com/claude-code) skill so Claude
-can plan, research, build, cost, and manage whole trips on your behalf — see
-[`skills/mna/SKILL.md`](./skills/mna/SKILL.md).
+It also ships as an agent skill — run `mna skills install` and your AI coding
+agent (Claude Code, Cursor, …) can plan, research, build, cost, and manage whole
+trips on your behalf. See [`skills/mna/SKILL.md`](./skills/mna/SKILL.md).
 
 Status: **pre-1.0, alpha.** Tagged releases publish binaries to GitHub
 Releases. npm and Homebrew distribution land with the first tag.
@@ -75,27 +75,67 @@ If you prefer headless / paste-token login:
 mna login --paste-token <key>      # generate the key from the user menu on app.mynextadventure.cloud
 ```
 
-## Use it as a Claude Code skill
+## Use it from your AI coding agent
 
-`mna` doubles as a [Claude Code](https://claude.com/claude-code) skill — install it and Claude
-can plan, research, cost, and manage whole trips for you. **One command:**
+`mna` doubles as an agent **skill** — install it and your agent can plan, research, cost, and
+manage whole trips for you. **One command:**
 
 ```bash
-git clone --depth 1 https://github.com/MantaCodeDevs/mna-cli /tmp/mna-cli && mkdir -p ~/.claude/skills && cp -r /tmp/mna-cli/skills/mna ~/.claude/skills/
+mna skills install
 ```
 
-This drops the skill at `~/.claude/skills/mna/`. Start (or `/reload`) Claude Code and just ask
-it to plan a trip — the skill triggers on its own. (Already have the repo cloned? Just
-`cp -r skills/mna ~/.claude/skills/`.)
-
-Installed via npm? The skill ships inside the package — no clone needed:
+It detects the AI clients on your machine, shows exactly what it will write where, and asks
+once. After a successful `mna login` on an interactive terminal it offers the same thing with a
+single `y` (silence it with `mna config set skills.prompt false`).
 
 ```bash
+mna skills list                      # what's detected, and what's already installed
+mna skills list --all                # every client mna knows how to install into
+mna skills install --dry-run         # show the writes, change nothing
+mna skills install --client cursor   # one client only
+mna skills install --all --yes       # every supported client, no prompt
+mna skills install --no-mcp          # skill only, skip the MCP server entry
+mna skills install --scope project   # into ./.claude/skills etc. instead of $HOME
+```
+
+Installs are idempotent: identical files are left alone, JSON configs are **merged** (never
+overwritten wholesale), anything modified is backed up next to itself as
+`<file>.mna-backup-<timestamp>`, and a config `mna` can't parse is reported rather than
+replaced.
+
+### Supported clients
+
+| Client | `--client` | Skill | MCP server config |
+|---|---|---|---|
+| Claude Code | `claude-code` | `~/.claude/skills/mna/` | `~/.claude.json` → `mcpServers` |
+| Cursor | `cursor` | `~/.cursor/skills/mna/` | `~/.cursor/mcp.json` → `mcpServers` |
+| Claude Desktop | `claude-desktop` | — | `claude_desktop_config.json` (per-OS) → `mcpServers` |
+| Windsurf / Devin Desktop | `windsurf` | `~/.codeium/windsurf/skills/mna/` | `~/.codeium/windsurf/mcp_config.json` |
+| VS Code (Copilot agent mode) | `vscode` | — | `<VS Code user dir>/mcp.json` → `servers` |
+| Universal agent skills | `agents` | `~/.agents/skills/mna/` | — |
+| Codex CLI | `codex` | `~/.codex/skills/mna/` | — (TOML config, not touched) |
+| OpenCode | `opencode` | `~/.config/opencode/skills/mna/` | — |
+| Gemini CLI | `gemini-cli` | `~/.gemini/skills/mna/` | `~/.gemini/settings.json` → `mcpServers` |
+
+The MCP entry points at the hosted server `https://mcp.mynextadventure.cloud/mcp`, written in
+whichever shape the client expects — `{"type":"http","url":…}` for Claude Code and VS Code,
+`{"url":…}` for Cursor, `{"httpUrl":…}` for Gemini CLI, `{"serverUrl":…}` for Windsurf, and the
+`npx -y mcp-remote` stdio bridge for Claude Desktop, which has no native remote transport. If
+you're logged in, your API key is embedded as an `X-API-Key` header — otherwise the client
+authenticates over OAuth on first use.
+
+### Manual install (fallback)
+
+The skill is plain markdown driving the CLI, so any agent that reads `SKILL.md` files can use
+it. Copy it wherever your agent looks:
+
+```bash
+# from a clone
+mkdir -p ~/.claude/skills && cp -r skills/mna ~/.claude/skills/
+
+# from the npm package
 mkdir -p ~/.claude/skills && cp -r "$(npm root -g)/@mantacodedevs/mna-cli/skills/mna" ~/.claude/skills/
 ```
-
-Other AI coding agents can use the same `skills/mna/SKILL.md` playbook — it's plain
-markdown driving the CLI.
 
 The skill drives the `mna` CLI, so install the CLI (above) and run `mna login` first.
 
@@ -113,6 +153,14 @@ Every command supports `--json` for piping into `jq` or Claude.
 | `mna keys list` | List active API keys with `current` flag on the calling key. |
 | `mna keys revoke <name> [--yes]` | Revoke an API key by name. |
 | `mna config get\|set apiBaseUrl [<url>]` | Read/override the API base URL locally. |
+| `mna config get\|set skills.prompt [true\|false]` | Toggle the post-login "install the skill?" offer. |
+
+### Agent integration
+
+| Command | Description |
+|---|---|
+| `mna skills list [--all] [--scope=user\|project]` | Show detected AI clients and whether the skill/MCP server is installed. |
+| `mna skills install [--client=<id>] [--all] [--scope=user\|project] [--no-mcp] [--dry-run] [--yes]` | Install the skill (and MCP server entry) into your AI clients. |
 
 ### Trips
 
@@ -220,7 +268,8 @@ The contract of record is `https://api.mynextadventure.cloud/v1/openapi.json`. I
 |---|---|
 | `MNA_API_KEY` | Override the key from the credentials file. Useful for CI. |
 | `MNA_API_BASE_URL` | Override the API base URL. Useful for local dev. |
-| `XDG_CONFIG_HOME` | Where the credentials file is stored. Default: `~/.config`. |
+| `XDG_CONFIG_HOME` | Where the credentials and settings files are stored. Default: `~/.config`. |
+| `CI=1` | Suppresses all interactive prompts, including the post-login skill offer. |
 | `MNA_DEBUG=1` | Print error stack traces. |
 | `NO_COLOR=1` | Disable ANSI colors. |
 
