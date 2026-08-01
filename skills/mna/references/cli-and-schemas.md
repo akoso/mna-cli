@@ -36,8 +36,13 @@ collections  list|show|create|edit|delete|add-goal|remove-goal|share|open-shared
   "totalCost": 1200, "currency": "EUR",
   "location": { ...see "Location shape" below... },
   "roomDetails": { "numberOfRooms": 1 },        // optional: sizeInM2
+  "externalRating": { "score": 9.7, "scale": 10, "count": 240, "source": "booking.com" },
+  "features": ["beachfront", "privateKitchen", "freeParking"],
+  "description": "Top-floor flat with a sea-facing terrace.",
+  "url": "https://…",                           // the listing / property site
+  "imageUrl": "https://…",                      // hotlinked photo, not copied
   "sourceUrl": "https://…",
-  "notes": "9.7 (240 reviews). Beachfront, kitchen, free parking.",
+  "notes": "Owner replies within the hour; parking is a shared yard.",
   "checkIn": "2026-07-07T12:00:00.000Z",        // ISO date-time
   "checkOut": "2026-07-15T12:00:00.000Z",
   "freeCancellationUntil": "2026-07-02T12:00:00.000Z"
@@ -45,6 +50,20 @@ collections  list|show|create|edit|delete|add-goal|remove-goal|share|open-shared
 ```
 `checkIn`/`checkOut`/`checkInTime`/`checkOutTime`/`freeCancellationUntil` can also be set with
 `options edit … --free-cancellation-until <date>` (accommodation only) without a JSON file.
+Everything else goes through `--from-json`, on both `options add` and `options edit`.
+
+`externalRating.scale` is **required whenever `score` is set** — Booking.com publishes out of 10,
+Google out of 5. Store both and quote the pair (`9.7/10`); never normalise or compare across scales.
+
+`features` (all optional, use only what the listing actually states):
+`beachfront`, `beachNearby`, `privateBeachArea`, `swimmingPool`, `kidsPool`, `kidsPlayArea`,
+`privateKitchen`, `sharedKitchen`, `washingMachine`, `familyRooms`, `airConditioning`,
+`freeParking`, `freeWifi`, `balconyTerrace`, `petsAllowed`.
+`privateKitchen` and `sharedKitchen` are different things: Booking lists "Shared kitchen" at
+property level, which is not what a user means by "an apartment with a kitchen".
+
+Put ratings and facilities in these fields rather than in `notes` — `mna trips show` renders them,
+and `notes` should carry what no field covers. `type` and `roomDetails` come back on read too.
 
 ### transport
 ```json
@@ -76,26 +95,36 @@ home-return drive on the `--return-to-home` destination so the per-variant total
 
 ## Location shape — a non-obvious gotcha
 
-For accommodation/transport `location`, the OpenAPI advertises flat `address` / `latitude` /
-`longitude` — **but the API drops those silently.** Only `name` persists from the flat form.
-Coordinates persist **only** when sent nested:
+Option locations are **written flat and read back nested**. Send `address` / `latitude` /
+`longitude`; a nested `formattedAddress` + `coordinates` object is silently dropped and only
+`name` survives (verified against production on both `options add` and `options edit`):
 
 ```json
 "location": {
   "name": "Seaside Apartment",
-  "formattedAddress": "<full address>, <City>, <Country>",
-  "coordinates": { "lat": 0.000000, "lng": 0.000000 }
+  "address": "<full address>, <City>, <Country>",
+  "latitude": 0.000000,
+  "longitude": 0.000000,
+  "locationiqPlaceId": "…"
 }
 ```
-Coordinate keys are `lat`/`lng` **everywhere, including event locations** — an event body with
-`coordinates.latitude`/`.longitude` is a 500, not a silent drop (verified against production).
-Get exact coordinates from the search result, or geocode the address (e.g. OpenStreetMap
-Nominatim). After setting, **verify with `trips show`** — never trust the 2xx alone.
+`trips show` returns the same place as `formattedAddress` + `coordinates.lat`/`.lng` — that's the
+read shape, not something to echo back on a write. `locationiqPlaceId` (and `googlePlaceId`)
+round-trip, so pass whichever your geocoder gave you and the app can re-resolve the place later.
+`location` is **replaced wholesale**, never merged: a partial `location` in an `options edit` body
+clears whatever you left out. Get exact coordinates from the search result, or geocode the address
+(e.g. OpenStreetMap Nominatim). After setting, **verify with `trips show`** — never trust the 2xx
+alone. Event locations are a different DTO but coordinate keys are still `lat`/`lng` — an event
+body with `coordinates.latitude`/`.longitude` is a 500, not a silent drop (verified against
+production).
 
 ## Dates
 
-`destinations --start-date/--end-date`, accommodation `checkIn/checkOut/freeCancellationUntil`,
-and event `start/end` are all ISO date-time. Accept `YYYY-MM-DD` from the user and normalize.
+`variants add` requires dates: `--start-date/--end-date` for exact, or all six of
+`--depart-not-before/--depart-not-after/--return-not-before/--return-not-after/--min-nights/--max-nights`
+for flexible. `destinations --start-date/--end-date`, accommodation
+`checkIn/checkOut/freeCancellationUntil`, and event `start/end` are all ISO date-time. Accept
+`YYYY-MM-DD` from the user and normalize.
 Using `T12:00:00.000Z` (noon UTC) avoids timezone off-by-one on the displayed calendar date.
 
 ### Variant dates — required on create

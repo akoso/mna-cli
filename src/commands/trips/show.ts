@@ -3,6 +3,7 @@ import { createApiClient } from '../../api/client'
 import { loadCredentials, resolveApiKey, resolveBaseUrl } from '../../auth/credentials-store'
 import { renderJson } from '../../render/json'
 import { renderTable } from '../../render/table'
+import { accommodationRows } from '../../render/accommodation'
 import { colors } from '../../render/colors'
 import { reportAndExit, requireApiKey } from '../../util/errors'
 
@@ -71,6 +72,24 @@ export const tripsShowCommand = defineCommand({
                     })) ?? [],
                 emptyMessage: 'No variants yet.',
             })
+
+            for (const variant of data.variants ?? []) {
+                const rows = accommodationRows(variant.destinations)
+                if (rows.length === 0) continue
+
+                stdout.write(`\n${colors.bold('Accommodation')} ${colors.dim(`· ${variant.name}`)}\n`)
+                renderTable({
+                    columns: [
+                        { header: 'Destination', key: 'destination', maxWidth: 18 },
+                        { header: 'Option', key: 'option', maxWidth: 28 },
+                        { header: 'Cost', key: 'cost', maxWidth: 12 },
+                        { header: 'Rating', key: 'rating', maxWidth: 13 },
+                        { header: 'Details', key: 'details', maxWidth: 28 },
+                        { header: 'Facilities', key: 'features', maxWidth: 36 },
+                    ],
+                    rows,
+                })
+            }
         } catch (err) {
             reportAndExit(err)
         }

@@ -628,6 +628,9 @@
               }
             }
           },
+          "400": {
+            "description": "Missing or unrecognisable dates."
+          },
           "404": {
             "description": "Trip not found or no edit access."
           }
@@ -724,6 +727,9 @@
         "responses": {
           "200": {
             "description": "Variant updated."
+          },
+          "400": {
+            "description": "Unrecognisable dates."
           },
           "404": {
             "description": "Trip or variant not found, or no edit access."
@@ -2965,8 +2971,47 @@
           },
           "googlePlaceId": {
             "type": "string"
+          },
+          "locationiqPlaceId": {
+            "type": "string"
           }
         }
+      },
+      "RoomDetailsOutV1Dto": {
+        "type": "object",
+        "properties": {
+          "numberOfRooms": {
+            "type": "number"
+          },
+          "sizeInM2": {
+            "type": "number"
+          }
+        }
+      },
+      "ExternalRatingV1Dto": {
+        "type": "object",
+        "properties": {
+          "score": {
+            "type": "number",
+            "description": "Rating score as published by the source (e.g. 8.8)."
+          },
+          "scale": {
+            "type": "number",
+            "description": "Maximum of the rating scale (e.g. 10 for Booking.com, 5 for Google). Required whenever score is set."
+          },
+          "count": {
+            "type": "number",
+            "description": "Number of reviews behind the score."
+          },
+          "source": {
+            "type": "string",
+            "description": "Where the rating came from (e.g. \"booking.com\")."
+          }
+        },
+        "required": [
+          "score",
+          "scale"
+        ]
       },
       "AccommodationOptionV1Dto": {
         "type": "object",
@@ -2976,6 +3021,18 @@
           },
           "name": {
             "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "hotel",
+              "hostel",
+              "apartment",
+              "house",
+              "camping",
+              "other"
+            ],
+            "description": "Type of accommodation."
           },
           "totalCost": {
             "type": "number"
@@ -3004,11 +3061,58 @@
           "checkOutTime": {
             "type": "string"
           },
+          "roomDetails": {
+            "$ref": "#/components/schemas/RoomDetailsOutV1Dto"
+          },
           "sourceUrl": {
             "type": "string"
           },
           "notes": {
             "type": "string"
+          },
+          "imageUrl": {
+            "type": "string",
+            "description": "URL of a photo of the accommodation."
+          },
+          "description": {
+            "type": "string",
+            "description": "Short description of the accommodation."
+          },
+          "url": {
+            "type": "string",
+            "description": "Link to the listing or the property website."
+          },
+          "features": {
+            "type": "array",
+            "description": "Facilities this accommodation offers.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "beachfront",
+                "beachNearby",
+                "privateBeachArea",
+                "swimmingPool",
+                "kidsPool",
+                "kidsPlayArea",
+                "privateKitchen",
+                "sharedKitchen",
+                "washingMachine",
+                "familyRooms",
+                "airConditioning",
+                "freeParking",
+                "freeWifi",
+                "balconyTerrace",
+                "petsAllowed"
+              ]
+            }
+          },
+          "externalRating": {
+            "description": "Guest rating from an external source.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExternalRatingV1Dto"
+              }
+            ]
           },
           "createdBy": {
             "$ref": "#/components/schemas/UserInfoV1Dto"
@@ -3412,6 +3516,9 @@
           "googlePlaceId": {
             "type": "string"
           },
+          "locationiqPlaceId": {
+            "type": "string"
+          },
           "name": {
             "type": "string"
           },
@@ -3442,7 +3549,7 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "Name of the accommodation (e.g. \"Hilton Times Square\")."
+            "description": "Display name of the accommodation exactly as a human would call it (e.g. \"Villa Ave\"). Never embed price, town, dates, status or commentary here — those belong in totalCost, location, checkIn/checkOut and notes."
           },
           "type": {
             "type": "string",
@@ -3494,10 +3601,55 @@
             "$ref": "#/components/schemas/RoomDetailsV1Dto"
           },
           "notes": {
-            "type": "string"
+            "type": "string",
+            "description": "Free-form commentary: provenance, caveats, \"user has stayed here before\", trade-offs. Anything without a dedicated field goes here, not in name."
           },
           "sourceUrl": {
             "type": "string"
+          },
+          "imageUrl": {
+            "type": "string",
+            "description": "URL of a photo of the accommodation. Hotlinked, not copied."
+          },
+          "description": {
+            "type": "string",
+            "description": "Short description of the accommodation."
+          },
+          "url": {
+            "type": "string",
+            "description": "Link to the listing or the property website."
+          },
+          "features": {
+            "type": "array",
+            "description": "Facilities this accommodation offers.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "beachfront",
+                "beachNearby",
+                "privateBeachArea",
+                "swimmingPool",
+                "kidsPool",
+                "kidsPlayArea",
+                "privateKitchen",
+                "sharedKitchen",
+                "washingMachine",
+                "familyRooms",
+                "airConditioning",
+                "freeParking",
+                "freeWifi",
+                "balconyTerrace",
+                "petsAllowed"
+              ]
+            }
+          },
+          "externalRating": {
+            "description": "Guest rating from an external source.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExternalRatingV1Dto"
+              }
+            ]
           }
         },
         "required": [
@@ -3576,7 +3728,8 @@
             "type": "string"
           },
           "notes": {
-            "type": "string"
+            "type": "string",
+            "description": "Free-form commentary: provenance, caveats, trade-offs. Anything without a dedicated field goes here."
           },
           "link": {
             "type": "string"
@@ -3614,7 +3767,8 @@
             "type": "string"
           },
           "notes": {
-            "type": "string"
+            "type": "string",
+            "description": "Free-form commentary: provenance, caveats, trade-offs. Anything without a dedicated field goes here."
           },
           "link": {
             "type": "string"
@@ -3664,7 +3818,7 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "Event name (e.g. \"Louvre Museum\")."
+            "description": "Display name of the event exactly as a human would call it (e.g. \"Louvre Museum\"). Never embed price, dates, status or commentary here — those belong in totalCost, start/end and notes."
           },
           "start": {
             "type": "string",
@@ -3692,7 +3846,8 @@
             "$ref": "#/components/schemas/CreateEventLocationV1Dto"
           },
           "notes": {
-            "type": "string"
+            "type": "string",
+            "description": "Free-form commentary: provenance, caveats, trade-offs. Anything without a dedicated field goes here, not in name."
           }
         },
         "required": [
@@ -3704,7 +3859,7 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "Trip name as shown in the UI.",
+            "description": "Trip name as shown in the UI, exactly as a human would call it. Never embed dates, costs, status or commentary here.",
             "example": "Japan 2026"
           },
           "coverPhoto": {
@@ -3722,7 +3877,7 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "New trip name."
+            "description": "New trip name, exactly as a human would call it. Never embed dates, costs, status or commentary here."
           },
           "coverPhoto": {
             "type": "string",
@@ -3792,7 +3947,7 @@
             "description": "Variant name (e.g. \"Beach option\", \"Mountain option\")."
           },
           "dates": {
-            "description": "Either an exact-dates or flexi-dates structure for this variant.",
+            "description": "Dates for this variant — required. Either exact dates ({ startDate, endDate }) or flexible dates ({ departLeavingNotBeforeDate, departArrivingNotAfterDate, returnLeavingNotBeforeDate, returnArrivingNotAfterDate, minNights, maxNights }).",
             "oneOf": [
               {
                 "$ref": "#/components/schemas/ExactDatesV1Dto"
@@ -3808,7 +3963,8 @@
           }
         },
         "required": [
-          "name"
+          "name",
+          "dates"
         ]
       },
       "DuplicateVariantResultV1Dto": {
@@ -3973,7 +4129,8 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "Name of the accommodation."
+            "nullable": true,
+            "description": "Display name of the accommodation exactly as a human would call it (e.g. \"Villa Ave\") — never embed price, town, dates, status or commentary here; those belong in totalCost, location, checkIn/checkOut and notes. Pass null to clear."
           },
           "type": {
             "type": "string",
@@ -3985,7 +4142,8 @@
               "camping",
               "other"
             ],
-            "description": "Type of accommodation."
+            "nullable": true,
+            "description": "Type of accommodation. Pass null to clear."
           },
           "totalCost": {
             "type": "number",
@@ -4018,6 +4176,7 @@
           },
           "freeCancellationUntil": {
             "type": "string",
+            "nullable": true,
             "format": "date-time",
             "description": "Free cancellation deadline. Pass null to clear."
           },
@@ -4025,10 +4184,62 @@
             "$ref": "#/components/schemas/RoomDetailsV1Dto"
           },
           "notes": {
-            "type": "string"
+            "type": "string",
+            "nullable": true,
+            "description": "Free-form commentary: provenance, caveats, \"user has stayed here before\", trade-offs. Anything without a dedicated field goes here, not in name. Pass null to clear."
           },
           "sourceUrl": {
-            "type": "string"
+            "type": "string",
+            "nullable": true,
+            "description": "Link the option was captured from. Pass null to clear."
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "URL of a photo of the accommodation. Hotlinked, not copied. Pass null to clear."
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Short description of the accommodation. Pass null to clear."
+          },
+          "url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Link to the listing or the property website. Pass null to clear."
+          },
+          "features": {
+            "type": "array",
+            "description": "Facilities this accommodation offers.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "beachfront",
+                "beachNearby",
+                "privateBeachArea",
+                "swimmingPool",
+                "kidsPool",
+                "kidsPlayArea",
+                "privateKitchen",
+                "sharedKitchen",
+                "washingMachine",
+                "familyRooms",
+                "airConditioning",
+                "freeParking",
+                "freeWifi",
+                "balconyTerrace",
+                "petsAllowed"
+              ]
+            }
+          },
+          "externalRating": {
+            "nullable": true,
+            "description": "Guest rating from an external source. Pass null to clear.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExternalRatingV1Dto"
+              }
+            ]
           }
         }
       },
@@ -4087,7 +4298,8 @@
             "type": "string"
           },
           "notes": {
-            "type": "string"
+            "type": "string",
+            "description": "Free-form commentary: provenance, caveats, trade-offs. Anything without a dedicated field goes here."
           },
           "link": {
             "type": "string"
@@ -4119,7 +4331,8 @@
             "type": "string"
           },
           "notes": {
-            "type": "string"
+            "type": "string",
+            "description": "Free-form commentary: provenance, caveats, trade-offs. Anything without a dedicated field goes here."
           },
           "link": {
             "type": "string"
@@ -4158,7 +4371,7 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "Display name of the event."
+            "description": "Display name of the event exactly as a human would call it (e.g. \"Louvre Museum\"). Never embed price, dates, status or commentary here — those belong in totalCost, start/end and notes."
           },
           "start": {
             "type": "string",
@@ -4201,7 +4414,8 @@
             "type": "string"
           },
           "notes": {
-            "type": "string"
+            "type": "string",
+            "description": "Free-form commentary: provenance, caveats, trade-offs. Anything without a dedicated field goes here, not in name."
           }
         }
       },
@@ -4812,14 +5026,14 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "Goal name (e.g. \"See the Northern Lights\")."
+            "description": "Display name of the goal exactly as a human would call it (e.g. \"See the Northern Lights\"). Never embed budget, place, status or commentary here — those belong in estimatedBudget, location and notes."
           },
           "description": {
             "type": "string"
           },
           "notes": {
             "type": "string",
-            "description": "Free-form notes."
+            "description": "Free-form commentary: provenance, caveats, trade-offs. Anything without a dedicated field goes here, not in name."
           },
           "location": {
             "$ref": "#/components/schemas/GoalLocationV1Dto"
@@ -4919,13 +5133,15 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "Display name of the goal exactly as a human would call it. Never embed budget, place, status or commentary here — those belong in estimatedBudget, location and notes."
           },
           "description": {
             "type": "string"
           },
           "notes": {
-            "type": "string"
+            "type": "string",
+            "description": "Free-form commentary: provenance, caveats, trade-offs. Anything without a dedicated field goes here, not in name."
           },
           "location": {
             "$ref": "#/components/schemas/GoalLocationV1Dto"

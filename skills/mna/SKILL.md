@@ -14,9 +14,8 @@ description: >-
 # Planning trips with My Next Adventure (`mna`)
 
 `mna` is a CLI over the My Next Adventure API (`app.mynextadventure.cloud`). The app is the
-**source of truth** for a trip. Your job is to drive it as a thoughtful travel-planning
-partner: do the research and the arithmetic, keep the plan organized, and let the user make
-the real calls.
+**source of truth** for a trip. Your job is to run the process: do the research and the
+arithmetic, keep the plan structured, and let the user make the real calls.
 
 ## Bootstrap
 
@@ -36,88 +35,137 @@ trip
     └── event           ← an activity/booking (optional)
 ```
 Most things support multiple **options** so the user (and collaborators) can compare and vote;
-exactly one per kind is **selected** and counts toward the plan. After any write, the response
-is thin — **re-fetch `mna trips show <tripId> --json` to confirm it actually persisted.**
+exactly one per kind is **selected** and counts toward the plan.
 
-## How to work — the method
+## The process
 
-The *way of working* matters more than the commands. Internalize these principles, then follow
-the playbook below.
+Five phases. Most bad plans come from researching before eliciting, or building structure
+before the destination is actually decided.
 
-1. **The app holds the plan; keep a local mirror.** Treat the trip in `mna` as source of truth,
-   and also keep a lightweight `PLAN.md` in the working directory — IDs, decisions made, open
-   questions, running totals. It's what lets you resume cleanly in a later session.
-2. **Anchor on what exists.** Before creating anything, check `mna trips list --json` and/or ask
-   — the user may already have the trip going. Don't spawn a duplicate.
-3. **Brainstorm before building.** Nail who's going, exact dates, origin/return, the vibe, the
-   budget band, and the non-negotiables — and let the *user* define the variant strategy. Don't
-   invent structure they didn't ask for.
-4. **Variants are comparable whole-trip strategies**, not tweaks — e.g. "single base the whole
-   time" vs "stopover + base" vs "stopover + base + a different return stop". Fork a baseline
-   with `variants duplicate`, then diverge.
-5. **Recommend, don't enumerate.** Present 2–4 candidates with the *one trade-off that matters*
-   and a clear pick — not an exhaustive menu. Reserve a hard question (or `AskUserQuestion`) for
-   genuine forks: which stopover, which place, splurge vs value.
-6. **Research real, bookable data.** Use a hotel connector for accommodation and **verify
-   availability for the exact dates before recommending** (see
-   `references/research-and-costing.md`). Never invent prices or "it's available".
-7. **Cost with looked-up numbers, show the math.** Fuel prices, distances, nightly rates — look
-   them up, compute, and state what's excluded (food, tolls, activities). No hand-waved figures.
-8. **Be geography-aware.** Order legs to avoid backtracking, mark the return-home leg, and keep
-   far-flung sights as day-trips rather than extra bases. Break long drives with a stopover.
-9. **The user's edits are authoritative.** Manual price changes (e.g. a loyalty discount applied
-   by hand), geocoded location fixes, spelling corrections — keep them, never "correct" them
-   back to the scraped value. When you add an option, note that the real price may differ.
-10. **Iterate as the brief sharpens.** Accommodation priorities shift mid-search ("actually,
-    lakefront, calmer, with restaurants nearby"). Re-run the search against the new criteria
-    rather than defending the old shortlist.
-11. **Set precise, real data.** Exact coordinates, per-destination dates, free-cancellation
-    deadlines — so the plan maps correctly and is genuinely actionable.
+### 1. Elicit
 
-## The playbook
+Before any research, establish:
 
-0. **Bootstrap** — `mna whoami`; everything `--json`.
-1. **Frame & anchor** — confirm participants, exact dates, origin/return, vibe, budget, the main
-   goal. Anchor on an existing trip (`trips list`) or `mna trips create --name "…"`.
-2. **Shape variants with the user** — agree on 2–3 comparable strategies. The variant carries the
-   trip's dates, and `mna variants add` requires them:
-   `mna variants add <trip> --name "…" --start-date <YYYY-MM-DD> --end-date <YYYY-MM-DD>`
-   (or the six flexible-dates flags — see `references/cli-and-schemas.md`). Or
-   `mna variants duplicate` to fork a baseline and then `variants edit` the notes.
-3. **Lay out destinations** — add in travel order with dates:
-   `mna destinations add <trip> <variant> --place "<City, Country>"
-   --start-date <YYYY-MM-DD> --end-date <YYYY-MM-DD> --notes "…"`. Mark the home leg with
-   `--return-to-home`. Fix ordering with `mna destinations reorder … --order=k1,k2,k3`.
-   For stopovers, research candidates, present with a recommendation, let the user pick.
-4. **Transport per leg** — usually how you arrive at each destination (own car, train, flight).
-   Cost it (look up fuel/fares; see the reference). Add via
-   `mna options add … transport --from-json <file>` and `mna options select …`. Put the
-   home-return drive on the return-to-home destination so totals stay clean.
-5. **Accommodation per destination** — research with a hotel connector, present a curated spread
-   (price tiers + location trade-offs + ratings) with a recommendation, **verify availability**,
-   then add the shortlist (`options add … accommodation --from-json`), set the chosen one
-   `options select …`, and set its exact location, `--free-cancellation-until`, and check-in/out
-   dates. Replace stale placeholder options rather than piling new ones on top.
-6. **Events** — only if the user wants them. The app is not a day-by-day itinerary planner and
-   many users explicitly don't want that — ask, don't assume.
-7. **Choose & total** — `mna variants select <trip> <variant>`; sum selected accommodation +
-   transport; present the variant comparison with subtotals and what's excluded.
-8. **Sync & verify** — update `PLAN.md`, and confirm every change with `mna trips show --json`.
+- **Anchors** — the fixed points nothing else can move: a booked flight, an event date, a
+  pickup, a hard return-by date.
+- **Party** — who travels, which legs (trips can split), and children's ages, which change room
+  eligibility and price.
+- **Dates** — exact if known, otherwise a window plus a night count.
+- **Budget and home currency** — the ceiling, and the currency every total gets presented in.
+  Never infer it from the destination or carry it over from a previous trip.
+- **This trip's preferences** — not last trip's. "Have you been there, and did you like it?" is
+  a good question; "yes, that's why we're going back" is as valid an answer as "yes, so
+  somewhere new". Flag when a candidate is effectively a repeat, then let them decide.
+- **Origin and mode** — own vehicle (ask for real consumption), rental, rail, air.
 
-## Writing options and events
+Then check what exists: `mna trips list --json`. They may already have this trip going — anchor
+on it rather than spawning a duplicate. Let the *user* define the variant strategy; don't invent
+structure they didn't ask for. Reserve a hard question (or `AskUserQuestion`) for genuine forks.
 
-Options and events are created from a JSON body (`--from-json <file>`). The exact field shapes,
-the enums, the **nested-coordinates location requirement**, and the date/cancellation fields are
-in **`references/cli-and-schemas.md`** — read it before building option/event bodies.
+**Detect the mode.** Short answers, no engagement with the trade-offs, "you just pick" — that's a
+request, not disinterest. Stop interviewing, make the smallest safe assumptions, state them, and
+come back with one recommendation and a one-line rationale.
 
-## Research and costing
+### 2. Research real availability
 
-How to drive a hotel connector (search → verify availability → map into an option), run
-area/beachfront searches, and compute own-car fuel costs from looked-up prices live in
-**`references/research-and-costing.md`**.
+Never price from memory. Estimates run *low*, and in high season the gap is big enough to flip
+conclusions — so anything not from a live search is labelled an estimate.
 
-## Full command reference
+- Search with the real constraints: the exact dates for *that variant*, adults + children's
+  ages, the user's currency, hard requirements as filters.
+- **If the destination isn't settled, compare places before properties.** One representative
+  option per candidate place with its transfer time, total and honest downside; drill into
+  listings only for the shortlist. The data model assumes the place is known — often it's the
+  open question.
+- **Verify availability by name for the exact dates before recommending.** Search ranking hides
+  available places, and a property free for a long stay may be unavailable for a short one.
+- Present 2–4 candidates with the one trade-off that matters and a clear pick — not a menu. When
+  priorities shift mid-search, re-run against the new criteria instead of defending the old list.
 
-The complete command map (auth, trips, variants, destinations, options, events, access/voting,
-goals, collections) is in the repo `README.md`. When a body shape is unclear, fetch and read
-`https://api.mynextadventure.cloud/v1/openapi.json` — it's the contract of record.
+### 3. Structure it in MNA
+
+Build what the user agreed to, one level at a time:
+
+| Level | Command | Notes |
+|---|---|---|
+| trip | `mna trips create --name "…"` | the container |
+| variant | `mna variants add <trip> --name "…" --start-date <date> --end-date <date>`, or `variants duplicate <trip> <var>` | a whole-trip **strategy** ("single base" vs "stopover + base"), not a tweak. Dates are required — exact, or the six flexible-date flags (see reference). Fork a baseline, then diverge. |
+| destination | `mna destinations add <trip> <var> --place "<City, Country>" --start-date <date> --end-date <date>` | in travel order; `--return-to-home` marks the home leg; `destinations reorder … --order=k1,k2,k3` fixes order |
+| option | `mna options add <trip> <var> <dest> <kind> --from-json <file>`, then `mna options select …` | `<kind>` = `accommodation` \| `transport` \| `getting-around` |
+| event | `mna events add <trip> <var> --from-json <file>` | only if the user wants them — the app is not a day-by-day itinerary planner, and many users don't want one |
+
+Order legs to avoid backtracking, keep far-flung sights as day-trips rather than extra bases,
+and break a long drive with a stopover. Attach each transport leg to the destination it
+*arrives at*, and put the journey home on the return-to-home destination so totals stay clean.
+
+Set real data, not placeholders: exact coordinates on each option's `location`, per-destination
+dates, check-in/out, `--free-cancellation-until` on accommodation. Replace stale options rather
+than piling new ones on top. Write responses are thin — **re-fetch
+`mna trips show <tripId> --json`** and confirm the field you set actually persisted.
+
+### 4. Compare end-to-end
+
+Compare *trips*, not nightly rates. Total each variant as transfer there + stay + local
+mobility + journey home, in the user's currency, and state what's excluded (food, activities,
+tolls, parking).
+
+`mna trips show <trip> --all-options` prints each destination's accommodation with cost, guest
+rating and facilities, so a shortlist is comparable without re-reading your own notes.
+
+### 5. Decide, select, share
+
+`mna variants select <trip> <var>` and `mna options select …` record the decisions — a plan with
+nothing selected has no totals. Then `mna trips share <trip>` for a link, `mna access invite`
+for collaborators, and `mna vote option|event` when a group is choosing.
+
+Keep a lightweight `PLAN.md` in the working directory alongside the app: IDs, decisions made,
+open questions, running totals. It's what makes a later session resumable.
+
+## Checks worth running
+
+Not facts to know — categories to look up for *this* destination, season and party.
+
+- **Local booking conventions.** Changeover days, minimum stays and weekly-versus-nightly pricing
+  vary by region and season, and can lock or free specific date windows. Check before concluding
+  a place is unavailable or overpriced.
+- **Short-stay penalties.** Where the week is the real product, a few nights can price well above
+  pro-rata. Compare candidates at the *same* night count or the comparison lies.
+- **Getting there beyond fuel or fare.** Tolls, road-use charges, ferries, congestion zones,
+  parking, baggage fees — these reorder candidates, not just inflate them, and crossings cost
+  time as well as money.
+- **What the marketing word means locally.** "Beach", "central", "sea view", "family friendly"
+  aren't standardised. Verify against the map, the photos and the reviews before promising it.
+- **Property-level versus unit-level facilities.** A shared kitchen at property level is not a
+  kitchen in the apartment — that's why `privateKitchen` and `sharedKitchen` are separate.
+- **Whether the party shape has a filter.** Adults-only, family rooms, accessible rooms, pet
+  policies — use them when they're on-brief, ignore them when they're not.
+- **Fixed points make routing.** When the itinerary must include a pickup or an event, compare
+  variants by total transfer time and days lost. Routes that move *forward* through the fixed
+  point usually beat a there-and-back detour.
+
+## Field semantics
+
+The app renders and totals these fields; misuse degrades the plan quietly.
+
+- **`name` is a display name** — "Villa Ave", not "Villa Ave (best value, book by Friday)".
+  Price belongs in `totalCost` + `currency`, the place in `location`, the score in
+  `externalRating`, amenities in `features`, links in `url` / `sourceUrl`.
+- **`notes` is for commentary** — where you found it, what still needs verifying, why it was
+  ruled out. Anything with its own field goes in that field, or it renders twice, goes stale
+  independently, and can't be sorted or compared.
+- **Ratings keep their source's scale.** Store `externalRating.scale` beside the score (out of
+  10, out of 5) and quote the pair. Never normalise, and never rank a /10 score against a /5 one.
+- **The user's edits are authoritative.** A hand-corrected price, a fixed location or spelling —
+  keep it, and don't revert to the scraped value on the next sync.
+
+## Where the details live
+
+- **`references/cli-and-schemas.md`** — the JSON body shapes for options and events, the enums
+  (including the 15 accommodation `features`), the **flat-vs-nested location trap**, and the
+  date/cancellation fields. Read it before building any `--from-json` body.
+- **`references/research-and-costing.md`** — driving a hotel connector (search → verify
+  availability → map into an option), area-specific searches, and own-vehicle fuel arithmetic.
+- **repo `README.md`** — the complete command map (auth, trips, variants, destinations, options,
+  events, access/voting, goals, collections).
+- **`https://api.mynextadventure.cloud/v1/openapi.json`** — the contract of record when a body
+  shape is unclear.
