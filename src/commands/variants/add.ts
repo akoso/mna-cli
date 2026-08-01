@@ -4,6 +4,7 @@ import { loadCredentials, resolveApiKey, resolveBaseUrl } from '../../auth/crede
 import { renderJson } from '../../render/json'
 import { colors } from '../../render/colors'
 import { reportAndExit, requireApiKey } from '../../util/errors'
+import { requireVariantDates, variantDateArgs } from './dates'
 
 export const variantsAddCommand = defineCommand({
     meta: { name: 'add', description: 'Add a new variant to a trip.' },
@@ -11,16 +12,19 @@ export const variantsAddCommand = defineCommand({
         tripId: { type: 'positional', description: 'Trip ID.' },
         name: { type: 'string', required: true, description: 'Variant name.' },
         notes: { type: 'string', description: 'Free-form variant notes.' },
+        ...variantDateArgs,
         json: { type: 'boolean', default: false, description: 'Output as JSON.' },
     },
     async run({ args }) {
         try {
+            const dates = requireVariantDates(args)
+
             const creds = await loadCredentials()
             const apiKey = resolveApiKey(creds)
             requireApiKey(apiKey)
             const client = createApiClient({ baseUrl: resolveBaseUrl(creds), apiKey })
 
-            const body: Record<string, unknown> = { name: args.name }
+            const body: Record<string, unknown> = { name: args.name, dates }
             if (args.notes !== undefined) body.notes = args.notes
 
             const { data, error } = await client.POST('/v1/trips/{id}/variants', {
