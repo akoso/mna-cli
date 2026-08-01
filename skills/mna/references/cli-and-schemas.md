@@ -8,7 +8,8 @@ the field shapes you can't guess. Examples below use neutral placeholders.
 
 ```
 trips        list | show <id> [--all-options] | create --name | edit <id> | delete <id> | share | unshare
-variants     add <trip> --name | duplicate <trip> <var> | edit <trip> <var> | select <trip> <var> | delete
+variants     add <trip> --name <dates…> [--notes] | duplicate <trip> <var>
+             edit <trip> <var> [--name --notes <dates…>] | select <trip> <var> | delete
 destinations add <trip> <var> --place [--start-date --end-date --notes --return-to-home]
              edit <trip> <var> <destKey> [--place --notes --start-date --end-date --return-to-home/--no-…]
              reorder <trip> <var> --order=k1,k2,k3 | delete <trip> <var> <destKey>
@@ -70,7 +71,7 @@ home-return drive on the `--return-to-home` destination so the per-variant total
 ```json
 { "name": "City walking tour", "start": "2026-07-06T10:00", "end": "2026-07-06T13:00",
   "totalCost": 0, "currency": "EUR", "link": "…", "notes": "…",
-  "location": { "name": "Old Town", "formattedAddress": "…", "coordinates": { "latitude": 0.0, "longitude": 0.0 } } }
+  "location": { "name": "Old Town", "formattedAddress": "…", "coordinates": { "lat": 0.0, "lng": 0.0 } } }
 ```
 
 ## Location shape — a non-obvious gotcha
@@ -86,16 +87,32 @@ Coordinates persist **only** when sent nested:
   "coordinates": { "lat": 0.000000, "lng": 0.000000 }
 }
 ```
-(Option locations use `coordinates.lat`/`.lng`; **event** locations use
-`coordinates.latitude`/`.longitude`.) Get exact coordinates from the search result, or geocode
-the address (e.g. OpenStreetMap Nominatim). After setting, **verify with `trips show`** — never
-trust the 2xx alone.
+Coordinate keys are `lat`/`lng` **everywhere, including event locations** — an event body with
+`coordinates.latitude`/`.longitude` is a 500, not a silent drop (verified against production).
+Get exact coordinates from the search result, or geocode the address (e.g. OpenStreetMap
+Nominatim). After setting, **verify with `trips show`** — never trust the 2xx alone.
 
 ## Dates
 
 `destinations --start-date/--end-date`, accommodation `checkIn/checkOut/freeCancellationUntil`,
 and event `start/end` are all ISO date-time. Accept `YYYY-MM-DD` from the user and normalize.
 Using `T12:00:00.000Z` (noon UTC) avoids timezone off-by-one on the displayed calendar date.
+
+### Variant dates — required on create
+
+The variant is what carries the trip's dates, and the API refuses to store one without them.
+`variants add` takes one of two complete shapes; a half-filled or mixed set is rejected locally:
+
+```bash
+mna variants add <trip> --name "Beach option" --start-date 2026-09-01 --end-date 2026-09-08
+mna variants add <trip> --name "Flexible option" \
+  --depart-not-before 2026-09-01 --depart-not-after 2026-09-03 \
+  --return-not-before 2026-09-10 --return-not-after 2026-09-12 \
+  --min-nights 7 --max-nights 10
+```
+
+`variants edit` takes the same flags; leave them off and the existing dates stay untouched.
+Switching a variant between the two shapes is just an edit with the other flag set.
 
 ## Verify-after-write
 

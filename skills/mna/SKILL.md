@@ -79,7 +79,10 @@ the playbook below.
 0. **Bootstrap** — `mna whoami`; everything `--json`.
 1. **Frame & anchor** — confirm participants, exact dates, origin/return, vibe, budget, the main
    goal. Anchor on an existing trip (`trips list`) or `mna trips create --name "…"`.
-2. **Shape variants with the user** — agree on 2–3 comparable strategies. `mna variants add`, or
+2. **Shape variants with the user** — agree on 2–3 comparable strategies. The variant carries the
+   trip's dates, and `mna variants add` requires them:
+   `mna variants add <trip> --name "…" --start-date <YYYY-MM-DD> --end-date <YYYY-MM-DD>`
+   (or the six flexible-dates flags — see `references/cli-and-schemas.md`). Or
    `mna variants duplicate` to fork a baseline and then `variants edit` the notes.
 3. **Lay out destinations** — add in travel order with dates:
    `mna destinations add <trip> <variant> --place "<City, Country>"

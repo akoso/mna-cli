@@ -4,6 +4,7 @@ import { loadCredentials, resolveApiKey, resolveBaseUrl } from '../../auth/crede
 import { renderJson } from '../../render/json'
 import { colors } from '../../render/colors'
 import { reportAndExit, requireApiKey } from '../../util/errors'
+import { buildVariantDates, variantDateArgs } from './dates'
 
 export const variantsEditCommand = defineCommand({
     meta: { name: 'edit', description: 'Update fields on an existing variant.' },
@@ -12,6 +13,7 @@ export const variantsEditCommand = defineCommand({
         variantId: { type: 'positional', description: 'Variant ID.' },
         name: { type: 'string', description: 'New variant name.' },
         notes: { type: 'string', description: 'New variant notes.' },
+        ...variantDateArgs,
         json: { type: 'boolean', default: false, description: 'Output as JSON.' },
     },
     async run({ args }) {
@@ -19,8 +21,10 @@ export const variantsEditCommand = defineCommand({
             const updates: Record<string, unknown> = {}
             if (args.name !== undefined) updates.name = args.name
             if (args.notes !== undefined) updates.notes = args.notes
+            const dates = buildVariantDates(args)
+            if (dates !== undefined) updates.dates = dates
             if (Object.keys(updates).length === 0) {
-                throw new Error('Specify at least one of --name, --notes.')
+                throw new Error('Specify at least one of --name, --notes, or the date flags.')
             }
 
             const creds = await loadCredentials()
