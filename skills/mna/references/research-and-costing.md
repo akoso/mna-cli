@@ -17,8 +17,9 @@ the source, the workflow is the same:
    - require a kitchen when needed (filter to apartments / holiday homes).
    - hard requirements as filters (free parking, beachfront).
    - a price ceiling and type/photo filters to shape the spread.
-2. **For "on the water / at the nice beaches" type asks**, search the specific area by name or by
-   coordinates (lat/lng + radius) with a beachfront filter. A generic city search buries them.
+2. **For location-specific asks** — on the water, by the lifts, near the trailhead, walkable to
+   the old town — search that area by name or by coordinates (lat/lng + radius) with the matching
+   filter. A generic city-wide search buries exactly the places they asked for.
 3. **Present a curated spread, not the raw list** — typically a value pick, a proven/most-reviewed
    pick, and a splurge/location pick. For each: nightly + total, rating *and review count*, and
    the one location trade-off (central vs waterfront, walkable vs needs-the-car). Give a clear
@@ -44,14 +45,17 @@ When mapping facilities, `privateKitchen` means a kitchen in the unit; a propert
 
 The user usually just wants the fuel number. Do it honestly:
 
-1. **Look up current fuel prices** for the *countries the route passes through*, for the right
-   grade. Don't assume.
-2. **Route-weight** them — most of a long drive may be in one country; weight by rough km share.
-3. **Convert to the user's currency** (look up the FX rate).
-4. **Fuel = distance_km × (L/100km ÷ 100) × price_per_L.** Use the consumption the user gives.
+1. **Look up current fuel prices** for the *jurisdictions the route passes through* — countries,
+   or states/provinces where fuel is taxed locally — for the right grade. Don't assume.
+2. **Route-weight** them — most of a long drive may be in one of them; weight by rough distance
+   share.
+3. **Convert to the user's currency** (look up the FX rate) and work in the units they use.
+4. **Fuel = distance × consumption × price.** Metric: `km × (L/100km ÷ 100) × price_per_L`.
+   US customary: `miles ÷ mpg × price_per_gallon`. Use the consumption figure the user gives.
    Compute per leg; attach each leg's fuel to its destination's transport option; fold the
    home-return drive into the return-to-home leg.
-5. **State what's excluded** — tolls, vignettes, parking — unless asked to include them.
+5. **State what's excluded** — tolls and road-use charges, ferries, parking — unless asked to
+   include them.
 
 For other modes (train, flights), price the actual fares from a connector or the carrier, not a
 guess, and note the class/conditions.
