@@ -3549,7 +3549,7 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "Name of the accommodation (e.g. \"Hilton Times Square\")."
+            "description": "Display name of the accommodation exactly as a human would call it (e.g. \"Villa Ave\"). Never embed price, town, dates, status or commentary here — those belong in totalCost, location, checkIn/checkOut and notes."
           },
           "type": {
             "type": "string",
@@ -3601,7 +3601,8 @@
             "$ref": "#/components/schemas/RoomDetailsV1Dto"
           },
           "notes": {
-            "type": "string"
+            "type": "string",
+            "description": "Free-form commentary: provenance, caveats, \"user has stayed here before\", trade-offs. Anything without a dedicated field goes here, not in name."
           },
           "sourceUrl": {
             "type": "string"
@@ -3727,7 +3728,8 @@
             "type": "string"
           },
           "notes": {
-            "type": "string"
+            "type": "string",
+            "description": "Free-form commentary: provenance, caveats, trade-offs. Anything without a dedicated field goes here."
           },
           "link": {
             "type": "string"
@@ -3765,7 +3767,8 @@
             "type": "string"
           },
           "notes": {
-            "type": "string"
+            "type": "string",
+            "description": "Free-form commentary: provenance, caveats, trade-offs. Anything without a dedicated field goes here."
           },
           "link": {
             "type": "string"
@@ -3815,7 +3818,7 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "Event name (e.g. \"Louvre Museum\")."
+            "description": "Display name of the event exactly as a human would call it (e.g. \"Louvre Museum\"). Never embed price, dates, status or commentary here — those belong in totalCost, start/end and notes."
           },
           "start": {
             "type": "string",
@@ -3843,7 +3846,8 @@
             "$ref": "#/components/schemas/CreateEventLocationV1Dto"
           },
           "notes": {
-            "type": "string"
+            "type": "string",
+            "description": "Free-form commentary: provenance, caveats, trade-offs. Anything without a dedicated field goes here, not in name."
           }
         },
         "required": [
@@ -3855,7 +3859,7 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "Trip name as shown in the UI.",
+            "description": "Trip name as shown in the UI, exactly as a human would call it. Never embed dates, costs, status or commentary here.",
             "example": "Japan 2026"
           },
           "coverPhoto": {
@@ -3873,7 +3877,7 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "New trip name."
+            "description": "New trip name, exactly as a human would call it. Never embed dates, costs, status or commentary here."
           },
           "coverPhoto": {
             "type": "string",
@@ -3943,7 +3947,7 @@
             "description": "Variant name (e.g. \"Beach option\", \"Mountain option\")."
           },
           "dates": {
-            "description": "Either an exact-dates or flexi-dates structure for this variant.",
+            "description": "Dates for this variant — required. Either exact dates ({ startDate, endDate }) or flexible dates ({ departLeavingNotBeforeDate, departArrivingNotAfterDate, returnLeavingNotBeforeDate, returnArrivingNotAfterDate, minNights, maxNights }).",
             "oneOf": [
               {
                 "$ref": "#/components/schemas/ExactDatesV1Dto"
@@ -3959,7 +3963,8 @@
           }
         },
         "required": [
-          "name"
+          "name",
+          "dates"
         ]
       },
       "DuplicateVariantResultV1Dto": {
@@ -4125,7 +4130,7 @@
           "name": {
             "type": "string",
             "nullable": true,
-            "description": "Name of the accommodation. Pass null to clear."
+            "description": "Display name of the accommodation exactly as a human would call it (e.g. \"Villa Ave\") — never embed price, town, dates, status or commentary here; those belong in totalCost, location, checkIn/checkOut and notes. Pass null to clear."
           },
           "type": {
             "type": "string",
@@ -4181,7 +4186,7 @@
           "notes": {
             "type": "string",
             "nullable": true,
-            "description": "Free-text notes. Pass null to clear."
+            "description": "Free-form commentary: provenance, caveats, \"user has stayed here before\", trade-offs. Anything without a dedicated field goes here, not in name. Pass null to clear."
           },
           "sourceUrl": {
             "type": "string",
@@ -4293,7 +4298,8 @@
             "type": "string"
           },
           "notes": {
-            "type": "string"
+            "type": "string",
+            "description": "Free-form commentary: provenance, caveats, trade-offs. Anything without a dedicated field goes here."
           },
           "link": {
             "type": "string"
@@ -4325,7 +4331,8 @@
             "type": "string"
           },
           "notes": {
-            "type": "string"
+            "type": "string",
+            "description": "Free-form commentary: provenance, caveats, trade-offs. Anything without a dedicated field goes here."
           },
           "link": {
             "type": "string"
@@ -4364,7 +4371,7 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "Display name of the event."
+            "description": "Display name of the event exactly as a human would call it (e.g. \"Louvre Museum\"). Never embed price, dates, status or commentary here — those belong in totalCost, start/end and notes."
           },
           "start": {
             "type": "string",
@@ -4407,7 +4414,8 @@
             "type": "string"
           },
           "notes": {
-            "type": "string"
+            "type": "string",
+            "description": "Free-form commentary: provenance, caveats, trade-offs. Anything without a dedicated field goes here, not in name."
           }
         }
       },
@@ -5018,14 +5026,14 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "Goal name (e.g. \"See the Northern Lights\")."
+            "description": "Display name of the goal exactly as a human would call it (e.g. \"See the Northern Lights\"). Never embed budget, place, status or commentary here — those belong in estimatedBudget, location and notes."
           },
           "description": {
             "type": "string"
           },
           "notes": {
             "type": "string",
-            "description": "Free-form notes."
+            "description": "Free-form commentary: provenance, caveats, trade-offs. Anything without a dedicated field goes here, not in name."
           },
           "location": {
             "$ref": "#/components/schemas/GoalLocationV1Dto"
@@ -5125,13 +5133,15 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "Display name of the goal exactly as a human would call it. Never embed budget, place, status or commentary here — those belong in estimatedBudget, location and notes."
           },
           "description": {
             "type": "string"
           },
           "notes": {
-            "type": "string"
+            "type": "string",
+            "description": "Free-form commentary: provenance, caveats, trade-offs. Anything without a dedicated field goes here, not in name."
           },
           "location": {
             "$ref": "#/components/schemas/GoalLocationV1Dto"
