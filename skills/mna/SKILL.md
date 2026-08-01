@@ -73,6 +73,17 @@ the playbook below.
     rather than defending the old shortlist.
 11. **Set precise, real data.** Exact coordinates, per-destination dates, free-cancellation
     deadlines — so the plan maps correctly and is genuinely actionable.
+12. **Record the comparison, in native units.** Guest ratings, facilities, listing URL and photo are
+    real fields on an accommodation option — fill them instead of writing prose into `notes`. A
+    rating carries its own scale (Booking /10, Google /5): always store `externalRating.scale`
+    beside the score, quote it as `8.8/10 (92)`, and never normalise or rank 8.8 against 4.4.
+    Facilities are equally literal — `privateKitchen` is not `sharedKitchen`.
+13. **Never overload `name`.** An option's `name` is the display name of the thing — "Villa Ave",
+    not "Pag — Villa Ave (REAL, 6,891 zł)". Price belongs in `totalCost`+`currency`, the town in
+    `location`, the score in `externalRating`, amenities in `features`, links in `url`/`sourceUrl`.
+    Commentary — where you found it, "they've been here before", "ruled out", what still needs
+    verifying — belongs in `notes`. Information put anywhere but its own field renders twice in the
+    app, goes stale on its own, and can't be sorted or compared.
 
 ## The playbook
 
@@ -91,21 +102,60 @@ the playbook below.
    `mna options add … transport --from-json <file>` and `mna options select …`. Put the
    home-return drive on the return-to-home destination so totals stay clean.
 5. **Accommodation per destination** — research with a hotel connector, present a curated spread
-   (price tiers + location trade-offs + ratings) with a recommendation, **verify availability**,
-   then add the shortlist (`options add … accommodation --from-json`), set the chosen one
+   (price tiers + location trade-offs + guest ratings in their own scale) with a recommendation,
+   **verify availability**, then add the shortlist (`options add … accommodation --from-json`) with
+   `externalRating`, `features`, `description` and `url` filled in, set the chosen one
    `options select …`, and set its exact location, `--free-cancellation-until`, and check-in/out
-   dates. Replace stale placeholder options rather than piling new ones on top.
+   dates. `mna trips show` prints cost, rating and facilities per option, so the shortlist is
+   comparable without re-reading your own notes. Replace stale placeholder options rather than
+   piling new ones on top.
 6. **Events** — only if the user wants them. The app is not a day-by-day itinerary planner and
    many users explicitly don't want that — ask, don't assume.
 7. **Choose & total** — `mna variants select <trip> <variant>`; sum selected accommodation +
    transport; present the variant comparison with subtotals and what's excluded.
 8. **Sync & verify** — update `PLAN.md`, and confirm every change with `mna trips show --json`.
 
+## Heuristics from real sessions
+
+Checks to run and facts to surface. None of them decide anything — the user does.
+
+- **Estimates are not decision-grade.** Market-range guesses for peak-season coastal stays came in
+  60–100% *under* the real listings: the ranking between towns held, the absolute numbers didn't,
+  and "the sandy town costs the same as the pebble one" flipped once real prices landed. Price from
+  live availability for the actual dates and party before comparing variants; until you have that,
+  label the numbers as estimates and say the skew is upward in peak weeks.
+- **Cost the trip, not the room.** Fuel, tolls, vignettes and ferries reorder candidates — a region
+  1h30 further out netted even, a ferry-only island added ~500 zł plus queue risk. Total every
+  candidate end-to-end: transfer there + stay + drive home.
+- **If the destination isn't fixed, compare towns before properties** — one option per candidate
+  town with its own drive time, cost and honest downsides; drill into listings for the shortlist
+  only. The data model assumes the place is known; usually the place *is* the open question.
+- **Elicit, don't assume.** Learn what this planner wants for *this* trip before researching.
+  "Have you been there, and did you like it?" is a good question — "yes, that's why we're going
+  back" is as valid an answer as "yes, so somewhere new". Don't carry preferences silently from a
+  previous trip; confirm cheaply ("same style as last time?"). Do flag when a candidate is
+  effectively a repeat (15 minutes from somewhere they know, same beaches) so the choice is informed.
+- **Respect the lazy planner.** On "you pick" signals — short answers, no engagement with the
+  trade-offs — stop interviewing and recommend one reasonable option with a one-line rationale.
+  An interrogation fails the user as badly as a wrong assumption.
+- **Forward beats backtrack.** With pickups and meeting points, prefer variants that move through
+  the meeting point: the same reunion cost 294 zł as a forward leg vs 515 zł and a lost day as a
+  there-and-back.
+- **Regional traps that actually decided things:** Croatian coastal apartments run
+  Saturday-to-Saturday in peak season, so a mid-week start finds the gaps owners can't fill; short
+  stays carry a heavy premium in Italy (a town competitive over 7 nights was 1,800 zł worse over 4);
+  genuine sand is rare on the Adriatic, so name real sandy beaches instead of assuming; adults-only
+  properties are on-brief for a child-free segment; and "Shared kitchen" at property level is not a
+  private kitchen.
+- **Fix the anchors first:** immovable bookings, who travels which leg, real fuel consumption, the
+  budget ceiling, and the user's home currency — present totals in it.
+
 ## Writing options and events
 
-Options and events are created from a JSON body (`--from-json <file>`). The exact field shapes,
-the enums, the **nested-coordinates location requirement**, and the date/cancellation fields are
-in **`references/cli-and-schemas.md`** — read it before building option/event bodies.
+Options and events are created from a JSON body (`--from-json <file>`). The exact field shapes, the
+enums (including the 15 accommodation `features`), the **flat-vs-nested location trap**, and the
+date/cancellation fields are in **`references/cli-and-schemas.md`** — read it before building
+option/event bodies.
 
 ## Research and costing
 

@@ -29,11 +29,16 @@ the source, the workflow is the same:
    by-name availability check returns nothing, it's genuinely gone — drop it. This distinguishes
    "ranked out of the list" from "actually unavailable".
 5. **Map the chosen places into accommodation options** (`options add … accommodation --from-json`)
-   with the quoted total, exact `coordinates`, `sourceUrl`, rating in `notes`, then
-   `options select` the pick and set `--free-cancellation-until` + check-in/out.
+   with the quoted total, the exact location, `sourceUrl`, and the listing's own metadata —
+   `externalRating` (score **plus its scale** and review count), `features`, `description`, `url`,
+   `imageUrl` — then `options select` the pick and set `--free-cancellation-until` + check-in/out.
+   Only `notes` is free text; everything with a field goes in its field.
 
 Reviews: weight **review count**, not just score — a 10/10 from 4 reviews is far less proven than
-a 9.7 from 240. Flag thin-review places as such.
+a 9.7 from 240. Flag thin-review places as such. Keep each score in the scale its source published
+it in (`scale: 10` for Booking.com, `5` for Google) and never convert between them.
+When mapping facilities, `privateKitchen` means a kitchen in the unit; a property-level
+"Shared kitchen" is `sharedKitchen` and is not what a user asking for a kitchen wants.
 
 ## Costing own-car transport (fuel)
 

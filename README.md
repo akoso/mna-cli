@@ -204,7 +204,7 @@ Every command supports `--json` for piping into `jq` or Claude.
 | Command | Description |
 |---|---|
 | `mna trips list [--status=planning\|ready\|finished\|cancelled] [--include-example]` | List trips. |
-| `mna trips show <tripId> [--all-options]` | Show one trip in detail. |
+| `mna trips show <tripId> [--all-options]` | Show one trip in detail, with an accommodation table per variant (cost, guest rating in its source scale, facilities). `--all-options` adds the unselected options. |
 | `mna trips create --name <name> [--cover-photo <url>]` | Create a new trip. |
 | `mna trips edit <tripId> [--name=...] [--cover-photo=...] [--status=...]` | Update trip-level fields. |
 | `mna trips delete <tripId> [--yes]` | Delete a trip permanently. |

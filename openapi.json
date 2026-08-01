@@ -628,6 +628,9 @@
               }
             }
           },
+          "400": {
+            "description": "Missing or unrecognisable dates."
+          },
           "404": {
             "description": "Trip not found or no edit access."
           }
@@ -724,6 +727,9 @@
         "responses": {
           "200": {
             "description": "Variant updated."
+          },
+          "400": {
+            "description": "Unrecognisable dates."
           },
           "404": {
             "description": "Trip or variant not found, or no edit access."
@@ -2965,8 +2971,47 @@
           },
           "googlePlaceId": {
             "type": "string"
+          },
+          "locationiqPlaceId": {
+            "type": "string"
           }
         }
+      },
+      "RoomDetailsOutV1Dto": {
+        "type": "object",
+        "properties": {
+          "numberOfRooms": {
+            "type": "number"
+          },
+          "sizeInM2": {
+            "type": "number"
+          }
+        }
+      },
+      "ExternalRatingV1Dto": {
+        "type": "object",
+        "properties": {
+          "score": {
+            "type": "number",
+            "description": "Rating score as published by the source (e.g. 8.8)."
+          },
+          "scale": {
+            "type": "number",
+            "description": "Maximum of the rating scale (e.g. 10 for Booking.com, 5 for Google). Required whenever score is set."
+          },
+          "count": {
+            "type": "number",
+            "description": "Number of reviews behind the score."
+          },
+          "source": {
+            "type": "string",
+            "description": "Where the rating came from (e.g. \"booking.com\")."
+          }
+        },
+        "required": [
+          "score",
+          "scale"
+        ]
       },
       "AccommodationOptionV1Dto": {
         "type": "object",
@@ -2976,6 +3021,18 @@
           },
           "name": {
             "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "hotel",
+              "hostel",
+              "apartment",
+              "house",
+              "camping",
+              "other"
+            ],
+            "description": "Type of accommodation."
           },
           "totalCost": {
             "type": "number"
@@ -3004,11 +3061,58 @@
           "checkOutTime": {
             "type": "string"
           },
+          "roomDetails": {
+            "$ref": "#/components/schemas/RoomDetailsOutV1Dto"
+          },
           "sourceUrl": {
             "type": "string"
           },
           "notes": {
             "type": "string"
+          },
+          "imageUrl": {
+            "type": "string",
+            "description": "URL of a photo of the accommodation."
+          },
+          "description": {
+            "type": "string",
+            "description": "Short description of the accommodation."
+          },
+          "url": {
+            "type": "string",
+            "description": "Link to the listing or the property website."
+          },
+          "features": {
+            "type": "array",
+            "description": "Facilities this accommodation offers.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "beachfront",
+                "beachNearby",
+                "privateBeachArea",
+                "swimmingPool",
+                "kidsPool",
+                "kidsPlayArea",
+                "privateKitchen",
+                "sharedKitchen",
+                "washingMachine",
+                "familyRooms",
+                "airConditioning",
+                "freeParking",
+                "freeWifi",
+                "balconyTerrace",
+                "petsAllowed"
+              ]
+            }
+          },
+          "externalRating": {
+            "description": "Guest rating from an external source.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExternalRatingV1Dto"
+              }
+            ]
           },
           "createdBy": {
             "$ref": "#/components/schemas/UserInfoV1Dto"
@@ -3412,6 +3516,9 @@
           "googlePlaceId": {
             "type": "string"
           },
+          "locationiqPlaceId": {
+            "type": "string"
+          },
           "name": {
             "type": "string"
           },
@@ -3498,6 +3605,50 @@
           },
           "sourceUrl": {
             "type": "string"
+          },
+          "imageUrl": {
+            "type": "string",
+            "description": "URL of a photo of the accommodation. Hotlinked, not copied."
+          },
+          "description": {
+            "type": "string",
+            "description": "Short description of the accommodation."
+          },
+          "url": {
+            "type": "string",
+            "description": "Link to the listing or the property website."
+          },
+          "features": {
+            "type": "array",
+            "description": "Facilities this accommodation offers.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "beachfront",
+                "beachNearby",
+                "privateBeachArea",
+                "swimmingPool",
+                "kidsPool",
+                "kidsPlayArea",
+                "privateKitchen",
+                "sharedKitchen",
+                "washingMachine",
+                "familyRooms",
+                "airConditioning",
+                "freeParking",
+                "freeWifi",
+                "balconyTerrace",
+                "petsAllowed"
+              ]
+            }
+          },
+          "externalRating": {
+            "description": "Guest rating from an external source.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExternalRatingV1Dto"
+              }
+            ]
           }
         },
         "required": [
@@ -3973,7 +4124,8 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "Name of the accommodation."
+            "nullable": true,
+            "description": "Name of the accommodation. Pass null to clear."
           },
           "type": {
             "type": "string",
@@ -3985,7 +4137,8 @@
               "camping",
               "other"
             ],
-            "description": "Type of accommodation."
+            "nullable": true,
+            "description": "Type of accommodation. Pass null to clear."
           },
           "totalCost": {
             "type": "number",
@@ -4018,6 +4171,7 @@
           },
           "freeCancellationUntil": {
             "type": "string",
+            "nullable": true,
             "format": "date-time",
             "description": "Free cancellation deadline. Pass null to clear."
           },
@@ -4025,10 +4179,62 @@
             "$ref": "#/components/schemas/RoomDetailsV1Dto"
           },
           "notes": {
-            "type": "string"
+            "type": "string",
+            "nullable": true,
+            "description": "Free-text notes. Pass null to clear."
           },
           "sourceUrl": {
-            "type": "string"
+            "type": "string",
+            "nullable": true,
+            "description": "Link the option was captured from. Pass null to clear."
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "URL of a photo of the accommodation. Hotlinked, not copied. Pass null to clear."
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Short description of the accommodation. Pass null to clear."
+          },
+          "url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Link to the listing or the property website. Pass null to clear."
+          },
+          "features": {
+            "type": "array",
+            "description": "Facilities this accommodation offers.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "beachfront",
+                "beachNearby",
+                "privateBeachArea",
+                "swimmingPool",
+                "kidsPool",
+                "kidsPlayArea",
+                "privateKitchen",
+                "sharedKitchen",
+                "washingMachine",
+                "familyRooms",
+                "airConditioning",
+                "freeParking",
+                "freeWifi",
+                "balconyTerrace",
+                "petsAllowed"
+              ]
+            }
+          },
+          "externalRating": {
+            "nullable": true,
+            "description": "Guest rating from an external source. Pass null to clear.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExternalRatingV1Dto"
+              }
+            ]
           }
         }
       },
