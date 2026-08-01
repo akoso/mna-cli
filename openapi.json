@@ -3802,14 +3802,35 @@
           "googlePlaceId": {
             "type": "string"
           },
+          "locationiqPlaceId": {
+            "type": "string"
+          },
           "name": {
             "type": "string"
           },
           "formattedAddress": {
-            "type": "string"
+            "type": "string",
+            "description": "Full postal address. Takes precedence over `address` when both are sent."
+          },
+          "address": {
+            "type": "string",
+            "description": "Alias of `formattedAddress`, matching the option endpoints."
           },
           "coordinates": {
-            "$ref": "#/components/schemas/CreateEventLocationCoordinatesV1Dto"
+            "description": "Coordinates as `{ lat, lng }`. Takes precedence over `latitude`/`longitude` when both are sent.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreateEventLocationCoordinatesV1Dto"
+              }
+            ]
+          },
+          "latitude": {
+            "type": "number",
+            "description": "Alias of `coordinates.lat`, matching the option endpoints. Must be sent with `longitude`."
+          },
+          "longitude": {
+            "type": "number",
+            "description": "Alias of `coordinates.lng`, matching the option endpoints. Must be sent with `latitude`."
           }
         }
       },
@@ -4382,7 +4403,7 @@
             "format": "date-time"
           },
           "location": {
-            "$ref": "#/components/schemas/CreateOptionLocationV1Dto"
+            "$ref": "#/components/schemas/CreateEventLocationV1Dto"
           },
           "eventType": {
             "type": "string",

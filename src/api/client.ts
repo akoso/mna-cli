@@ -19,6 +19,58 @@ export class ApiError extends Error {
     }
 }
 
+const MAX_RAW_BODY_DETAIL_LENGTH = 200
+const FIRST_PRINTABLE_CHAR_CODE = 0x20
+
+function joinMessage(value: unknown): string | undefined {
+    if (typeof value === 'string') return value.trim() || undefined
+    if (Array.isArray(value)) {
+        const parts = value
+            .filter((part): part is string => typeof part === 'string')
+            .map((part) => part.trim())
+            .filter(Boolean)
+        return parts.length > 0 ? parts.join('; ') : undefined
+    }
+    return undefined
+}
+
+function isPrintable(text: string): boolean {
+    for (let i = 0; i < text.length; i++) {
+        if (text.charCodeAt(i) < FIRST_PRINTABLE_CHAR_CODE) return false
+    }
+    return true
+}
+
+function printableRawBody(text: string): string | undefined {
+    const trimmed = text.trim()
+    if (!trimmed || trimmed.length > MAX_RAW_BODY_DETAIL_LENGTH || !isPrintable(trimmed)) {
+        return undefined
+    }
+    return trimmed
+}
+
+function parseJsonBody(text: string): unknown {
+    try {
+        return JSON.parse(text)
+    } catch {
+        return undefined
+    }
+}
+
+/**
+ * Best-effort human-readable detail for a failed response. A body with nothing
+ * usable in it — today's production `{statusCode, timestamp, path}`, a stripped
+ * body, an HTML error page — yields undefined so the caller degrades to the
+ * bare status line.
+ */
+function extractErrorDetail(body: unknown, rawText: string): string | undefined {
+    if (body !== null && typeof body === 'object') {
+        const { message, error } = body as { message?: unknown; error?: unknown }
+        return joinMessage(message) ?? joinMessage(error)
+    }
+    return joinMessage(body) ?? printableRawBody(rawText)
+}
+
 export function createApiClient({ baseUrl, apiKey }: CreateApiClientOptions): Api {
     const client = createOpenApiFetch<paths>({ baseUrl })
 
@@ -29,10 +81,14 @@ export function createApiClient({ baseUrl, apiKey }: CreateApiClientOptions): Ap
         },
         async onResponse({ response }) {
             if (!response.ok) {
-                const body = await response.clone().json().catch(() => undefined)
-                const message =
-                    (body as { message?: string } | undefined)?.message ?? `HTTP ${response.status}`
-                throw new ApiError(response.status, message, body)
+                const rawText = await response
+                    .clone()
+                    .text()
+                    .catch(() => '')
+                const body = parseJsonBody(rawText)
+                const detail = extractErrorDetail(body, rawText)
+                const status = `HTTP ${response.status}`
+                throw new ApiError(response.status, detail ? `${status} — ${detail}` : status, body)
             }
 
             // Some endpoints (e.g. option creation) return a 2xx with an empty body and
