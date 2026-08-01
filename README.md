@@ -215,11 +215,25 @@ Every command supports `--json` for piping into `jq` or Claude.
 
 | Command | Description |
 |---|---|
-| `mna variants add <tripId> --name <name> [--notes=...]` | Add a new variant. |
+| `mna variants add <tripId> --name <name> <date flags> [--notes=...]` | Add a new variant. Dates are required — see below. |
 | `mna variants duplicate <tripId> <variantId>` | Duplicate a variant. |
-| `mna variants edit <tripId> <variantId> [--name=...] [--notes=...]` | Update variant fields. |
+| `mna variants edit <tripId> <variantId> [--name=...] [--notes=...] [<date flags>]` | Update variant fields. Omitting the date flags leaves the dates alone. |
 | `mna variants select <tripId> <variantId>` | Set the selected variant. |
 | `mna variants delete <tripId> <variantId> [--yes]` | Delete a variant. |
+
+A variant carries the trip's dates, and the API refuses to store one without them. Give
+either shape, whole — the CLI rejects a half-filled or mixed set before it sends anything:
+
+- **Exact:** `--start-date=YYYY-MM-DD --end-date=YYYY-MM-DD`
+- **Flexible:** `--depart-not-before --depart-not-after --return-not-before --return-not-after --min-nights --max-nights`
+
+```bash
+mna variants add <tripId> --name "Beach option" --start-date 2026-09-01 --end-date 2026-09-08
+mna variants add <tripId> --name "Flexible option" \
+  --depart-not-before 2026-09-01 --depart-not-after 2026-09-03 \
+  --return-not-before 2026-09-10 --return-not-after 2026-09-12 \
+  --min-nights 7 --max-nights 10
+```
 
 ### Destinations
 

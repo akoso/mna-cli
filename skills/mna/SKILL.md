@@ -89,7 +89,7 @@ Build what the user agreed to, one level at a time:
 | Level | Command | Notes |
 |---|---|---|
 | trip | `mna trips create --name "…"` | the container |
-| variant | `mna variants add <trip> --name "…"`, or `variants duplicate <trip> <var>` | a whole-trip **strategy** ("single base" vs "stopover + base"), not a tweak. Fork a baseline, then diverge. |
+| variant | `mna variants add <trip> --name "…" --start-date <date> --end-date <date>`, or `variants duplicate <trip> <var>` | a whole-trip **strategy** ("single base" vs "stopover + base"), not a tweak. Dates are required — exact, or the six flexible-date flags (see reference). Fork a baseline, then diverge. |
 | destination | `mna destinations add <trip> <var> --place "<City, Country>" --start-date <date> --end-date <date>` | in travel order; `--return-to-home` marks the home leg; `destinations reorder … --order=k1,k2,k3` fixes order |
 | option | `mna options add <trip> <var> <dest> <kind> --from-json <file>`, then `mna options select …` | `<kind>` = `accommodation` \| `transport` \| `getting-around` |
 | event | `mna events add <trip> <var> --from-json <file>` | only if the user wants them — the app is not a day-by-day itinerary planner, and many users don't want one |
